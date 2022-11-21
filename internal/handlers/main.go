@@ -31,6 +31,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("method GET")
 		fmt.Println("Path:", path.Base(r.URL.Path))
 		fmt.Println("URL:", url)
+		return
 	case http.MethodPost:
 		b, err := io.ReadAll(r.Body)
 		if err != nil || len(b) == 0 {
@@ -53,8 +54,10 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("method POST")
 		fmt.Println("Body:", string(b))
 		fmt.Println("Response:", index)
+		return
 	default:
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		fmt.Println("unknown")
+		return
 	}
 }
