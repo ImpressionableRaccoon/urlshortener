@@ -24,7 +24,8 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.WriteHeader(307)
+		w.Write([]byte{})
 	case http.MethodPost:
 		b, err := io.ReadAll(r.Body)
 		if err != nil || len(b) == 0 {
@@ -37,7 +38,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-		
+
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(index))
 	default:
