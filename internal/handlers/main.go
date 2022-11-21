@@ -10,7 +10,6 @@ import (
 
 // RootHandler — обработчик запроса к корню
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("\nNew request:", r.Method)
 	switch r.Method {
 	case http.MethodGet:
 		id := path.Base(r.URL.Path)
@@ -27,10 +26,6 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Location", url)
 		w.WriteHeader(307)
-
-		fmt.Println("method GET")
-		fmt.Println("Path:", path.Base(r.URL.Path))
-		fmt.Println("URL:", url)
 	case http.MethodPost:
 		b, err := io.ReadAll(r.Body)
 		if err != nil || len(b) == 0 {
@@ -51,13 +46,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err)
 		}
-
-		fmt.Println("method POST")
-		fmt.Println("Content-Type:", r.Header.Get("Content-Type"))
-		fmt.Println("Body:", string(b))
-		fmt.Println("Response:", url)
 	default:
 		http.Error(w, "Bad request", http.StatusBadRequest)
-		fmt.Println("unknown")
 	}
 }
