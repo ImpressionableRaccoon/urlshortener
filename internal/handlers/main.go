@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/shorturl"
 	"io"
 	"net/http"
@@ -25,7 +26,10 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Location", url)
 		w.WriteHeader(307)
-		w.Write([]byte{})
+
+		fmt.Println("\nNew request: method GET")
+		fmt.Println("Path:", path.Base(r.URL.Path))
+		fmt.Println("URL:", url)
 	case http.MethodPost:
 		b, err := io.ReadAll(r.Body)
 		if err != nil || len(b) == 0 {
@@ -40,8 +44,16 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(index))
+		_, err = w.Write([]byte(index))
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Println("\nNew request: method POST")
+		fmt.Println("Body:", string(b))
+		fmt.Println("Response:", index)
 	default:
 		http.Error(w, "Bad request", http.StatusBadRequest)
+		fmt.Println("\nNew request: unknown")
 	}
 }
