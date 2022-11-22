@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/shorturl"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"io"
 	"net/http"
 	"path"
@@ -18,7 +18,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		url, err := shorturl.Get(id)
+		url, err := storage.Get(id)
 		if err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
@@ -33,7 +33,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		index, err := shorturl.Make(string(b))
+		index, err := storage.Make(string(b))
 		if err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
