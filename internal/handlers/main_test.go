@@ -23,6 +23,7 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 307, res.StatusCode)
@@ -39,6 +40,7 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 400, res.StatusCode)
@@ -52,6 +54,7 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 400, res.StatusCode)
@@ -65,6 +68,7 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 400, res.StatusCode)
@@ -81,12 +85,12 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 201, res.StatusCode)
 
 		// проверяем body на пустоту
-		defer res.Body.Close()
 		resBody, err := io.ReadAll(res.Body)
 		if err != nil {
 			t.Fatal(err)
@@ -102,6 +106,7 @@ func TestRootHandler(t *testing.T) {
 		h := RootHandler(st)
 		h.ServeHTTP(w, request)
 		res := w.Result()
+		defer res.Body.Close()
 
 		// сравниваем код ответа
 		assert.Equal(t, 307, res.StatusCode)
