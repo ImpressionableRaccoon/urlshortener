@@ -26,7 +26,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 307, res.StatusCode)
+		assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 
 		// сравниваем ссылку, на которую нас редиректит
 		assert.Equal(t, st["test"], res.Header.Get("Location"))
@@ -43,7 +43,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 400, res.StatusCode)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
 	// пробуем получить короткую ссылку для пустого URL
@@ -57,7 +57,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 400, res.StatusCode)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
 	// пробуем отправить PUT-запрос
@@ -71,7 +71,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 400, res.StatusCode)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
 	originalLink := "https://impressionablracoon.com"
@@ -88,7 +88,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 201, res.StatusCode)
+		assert.Equal(t, http.StatusCreated, res.StatusCode)
 
 		// проверяем body на пустоту
 		resBody, err := io.ReadAll(res.Body)
@@ -109,7 +109,7 @@ func TestRootHandler(t *testing.T) {
 		defer res.Body.Close()
 
 		// сравниваем код ответа
-		assert.Equal(t, 307, res.StatusCode)
+		assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 
 		// сравниваем ссылку, на которую нас редиректит
 		assert.Equal(t, originalLink, res.Header.Get("Location"))

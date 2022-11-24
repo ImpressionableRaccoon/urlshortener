@@ -36,7 +36,7 @@ func RootGetHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) 
 	}
 
 	w.Header().Set("Location", url)
-	w.WriteHeader(307)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 // RootPostHandler - обработчик POST-запросов к корню
