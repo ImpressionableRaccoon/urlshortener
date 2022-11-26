@@ -2,29 +2,15 @@ package handlers
 
 import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
-	"path"
 )
-
-// RootHandler — обработчик запроса к корню
-func RootHandler(st storage.Storage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			RootGetHandler(w, r, st)
-		case http.MethodPost:
-			RootPostHandler(w, r, st)
-		default:
-			http.Error(w, "Bad request", http.StatusBadRequest)
-		}
-	}
-}
 
 // RootGetHandler - обработчик GET-запросов к корню
 func RootGetHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
-	id := path.Base(r.URL.Path)
-	if id == "/" {
+	id := chi.URLParam(r, "ID")
+	if id == "" {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
