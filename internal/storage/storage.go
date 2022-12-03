@@ -15,6 +15,10 @@ const (
 
 type Storage map[string]string
 
+func NewStorage() Storage {
+	return make(Storage)
+}
+
 func (st Storage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st[id] {
 		rand.Seed(time.Now().UnixNano())
@@ -39,8 +43,4 @@ func (st Storage) Get(id string) (string, error) {
 		return url, nil
 	}
 	return "", errors.New("URL not found")
-}
-
-func NewStorage() Storage {
-	return make(Storage)
 }
