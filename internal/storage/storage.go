@@ -13,11 +13,11 @@ const (
 	idLength          = 5
 )
 
+var storage *Storage
+
 type Storage struct {
 	Values map[string]string // map[id]url
 }
-
-var storage *Storage
 
 func GetStorage() (*Storage, error) {
 	if storage != nil {

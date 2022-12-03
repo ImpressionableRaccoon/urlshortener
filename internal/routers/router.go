@@ -4,10 +4,9 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"net/http"
 )
 
-func NewRouter() chi.Router {
+func NewRouter() (chi.Router, error) {
 	// создаем роутер
 	r := chi.NewRouter()
 	// зададим встроенные middleware, чтобы улучшить стабильность приложения
@@ -15,14 +14,15 @@ func NewRouter() chi.Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	// получаем хандлер
+	h, err := handlers.GetHandler()
+	if err != nil {
+		return nil, err
+	}
 	// настроим маршруты
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			handlers.RootPostHandler(w, r)
-		})
-		r.Get("/{ID}", func(w http.ResponseWriter, r *http.Request) {
-			handlers.RootGetHandler(w, r)
-		})
+		r.Post("/", h.Post)
+		r.Get("/{ID}", h.Get)
 	})
-	return r
+	return r, nil
 }

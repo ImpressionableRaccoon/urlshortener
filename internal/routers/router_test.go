@@ -34,7 +34,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	// создаем хранилище для тестов
+	// создаем хранилище
 	st, err := storage.GetStorage()
 	if err != nil {
 		panic(err)
@@ -42,7 +42,12 @@ func TestRouter(t *testing.T) {
 
 	st.Values["test"] = "https://google.com"
 
-	r := NewRouter()
+	// создаем роутер и сервер для тестов
+	r, err := NewRouter()
+	if err != nil {
+		panic(err)
+	}
+
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

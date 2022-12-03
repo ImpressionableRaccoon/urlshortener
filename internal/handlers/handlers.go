@@ -7,21 +7,37 @@ import (
 	"net/http"
 )
 
-// RootGetHandler - обработчик GET-запросов к корню
-func RootGetHandler(w http.ResponseWriter, r *http.Request) {
-	st, err := storage.GetStorage()
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+var h *Handler
+
+type Handler struct {
+	st *storage.Storage
+}
+
+func GetHandler() (*Handler, error) {
+	if h != nil {
+		return h, nil
 	}
 
+	s, err := storage.GetStorage()
+	if err != nil {
+		return nil, err
+	}
+
+	h = &Handler{
+		st: s,
+	}
+
+	return h, nil
+}
+
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "ID")
 	if id == "" {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	url, err := st.Get(id)
+	url, err := h.st.Get(id)
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
@@ -31,14 +47,7 @@ func RootGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-// RootPostHandler - обработчик POST-запросов к корню
-func RootPostHandler(w http.ResponseWriter, r *http.Request) {
-	st, err := storage.GetStorage()
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
+func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil || len(b) == 0 {
@@ -46,7 +55,7 @@ func RootPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := st.Add(string(b))
+	index, err := h.st.Add(string(b))
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return

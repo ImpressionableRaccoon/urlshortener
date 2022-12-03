@@ -18,7 +18,10 @@ func main() {
 		panic(err)
 	}
 	// создадим роутер
-	r := routers.NewRouter()
+	r, err := routers.NewRouter()
+	if err != nil {
+		panic(err)
+	}
 	// запуск сервера
 	log.Fatal(http.ListenAndServe(serverAddress, r))
 }
