@@ -31,11 +31,11 @@ func GetStorage() (*Storage, error) {
 	return storage, nil
 }
 
-func (st *Storage) Add(url string) (id string, e error) {
+func (st *Storage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.Values[id] {
-		id, e = getRandomID()
-		if e != nil {
-			return "", e
+		id, err = getRandomID()
+		if err != nil {
+			return "", err
 		}
 	}
 
