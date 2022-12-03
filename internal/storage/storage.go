@@ -13,34 +13,54 @@ const (
 	idLength          = 5
 )
 
-type Storage map[string]string
-
-func NewStorage() Storage {
-	return make(Storage)
+type Storage struct {
+	Values map[string]string // map[id]url
 }
 
-func (st Storage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st[id] {
-		rand.Seed(time.Now().UnixNano())
-		var b strings.Builder
-		for i := 0; i < idLength; i++ {
-			_, err := fmt.Fprint(&b, string(allowedCharacters[rand.Int31n(int32(len(allowedCharacters)))]))
-			if err != nil {
-				return "", err
-			}
-		}
-		id = b.String()
+var storage *Storage
+
+func GetStorage() (*Storage, error) {
+	if storage != nil {
+		return storage, nil
 	}
 
-	st[id] = url
+	storage = &Storage{
+		Values: make(map[string]string),
+	}
+
+	return storage, nil
+}
+
+func (st *Storage) Add(url string) (id string, e error) {
+	for ok := true; ok; _, ok = st.Values[id] {
+		id, e = getRandomID()
+		if e != nil {
+			return "", e
+		}
+	}
+
+	st.Values[id] = url
 
 	return id, nil
 }
 
-func (st Storage) Get(id string) (string, error) {
-	url, ok := st[id]
+func (st *Storage) Get(id string) (url string, e error) {
+	url, ok := st.Values[id]
 	if ok {
 		return url, nil
 	}
 	return "", errors.New("URL not found")
+}
+
+func getRandomID() (string, error) {
+	rand.Seed(time.Now().UnixNano())
+	allowedCharactersLength := int32(len(allowedCharacters))
+	var b strings.Builder
+	for i := 0; i < idLength; i++ {
+		_, err := fmt.Fprint(&b, string(allowedCharacters[rand.Int31n(allowedCharactersLength)]))
+		if err != nil {
+			return "", err
+		}
+	}
+	return b.String(), nil
 }

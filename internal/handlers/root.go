@@ -8,7 +8,13 @@ import (
 )
 
 // RootGetHandler - обработчик GET-запросов к корню
-func RootGetHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
+func RootGetHandler(w http.ResponseWriter, r *http.Request) {
+	st, err := storage.GetStorage()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	id := chi.URLParam(r, "ID")
 	if id == "" {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -26,8 +32,15 @@ func RootGetHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) 
 }
 
 // RootPostHandler - обработчик POST-запросов к корню
-func RootPostHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
+func RootPostHandler(w http.ResponseWriter, r *http.Request) {
+	st, err := storage.GetStorage()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil || len(b) == 0 {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return

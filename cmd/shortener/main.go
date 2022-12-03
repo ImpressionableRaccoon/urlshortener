@@ -13,9 +13,12 @@ const (
 
 func main() {
 	// создаем хранилище для коротких ссылок
-	st := storage.NewStorage()
+	_, err := storage.GetStorage()
+	if err != nil {
+		panic(err)
+	}
 	// создадим роутер
-	r := routers.NewRouter(st)
+	r := routers.NewRouter()
 	// запуск сервера
 	log.Fatal(http.ListenAndServe(serverAddress, r))
 }

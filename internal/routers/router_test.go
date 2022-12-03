@@ -35,10 +35,14 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 func TestRouter(t *testing.T) {
 	// создаем хранилище для тестов
-	st := storage.NewStorage()
-	st["test"] = "https://google.com"
+	st, err := storage.GetStorage()
+	if err != nil {
+		panic(err)
+	}
 
-	r := NewRouter(st)
+	st.Values["test"] = "https://google.com"
+
+	r := NewRouter()
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -48,7 +52,7 @@ func TestRouter(t *testing.T) {
 		// сравниваем код ответа
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
 		// сравниваем ссылку, на которую редиректит
-		assert.Equal(t, st["test"], header.Get("Location"))
+		assert.Equal(t, st.Values["test"], header.Get("Location"))
 	})
 
 	// пробуем получить несуществующий URL
