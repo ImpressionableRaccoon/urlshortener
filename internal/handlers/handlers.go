@@ -48,7 +48,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 
 	index, err := h.st.Add(string(b))
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
