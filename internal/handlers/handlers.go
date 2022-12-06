@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -50,7 +52,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := "http://localhost:8080/" + index
+	url := fmt.Sprintf("%s%s", configs.ServerURL, index)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(url))
