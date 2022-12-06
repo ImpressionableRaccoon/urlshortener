@@ -6,20 +6,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter() (chi.Router, error) {
+func NewRouter(handler *handlers.Handler) (chi.Router, error) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	h, err := handlers.GetHandler()
-	if err != nil {
-		return nil, err
-	}
-
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", h.Post)
-		r.Get("/{ID}", h.Get)
+		r.Post("/", handler.Post)
+		r.Get("/{ID}", handler.Get)
 	})
 	return r, nil
 }

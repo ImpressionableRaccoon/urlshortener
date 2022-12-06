@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,8 +43,14 @@ func TestRouter(t *testing.T) {
 
 	st.Values["test"] = "https://google.com"
 
+	// создаем хендлер
+	handler, err := handlers.GetHandler()
+	if err != nil {
+		panic(err)
+	}
+
 	// создаем роутер и сервер для тестов
-	r, err := NewRouter()
+	r, err := NewRouter(handler)
 	if err != nil {
 		panic(err)
 	}

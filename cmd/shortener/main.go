@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"log"
@@ -17,8 +18,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// создаем хендлер
+	handler, err := handlers.GetHandler()
+	if err != nil {
+		panic(err)
+	}
 	// создадим роутер
-	r, err := routers.NewRouter()
+	r, err := routers.NewRouter(handler)
 	if err != nil {
 		panic(err)
 	}
