@@ -13,14 +13,12 @@ const (
 	idLength          = 5
 )
 
-var storage *Storage
-
 type Storage struct {
 	Values map[string]string // map[id]url
 }
 
 func NewStorage() (*Storage, error) {
-	storage = &Storage{
+	storage := &Storage{
 		Values: make(map[string]string),
 	}
 
