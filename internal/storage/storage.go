@@ -19,11 +19,7 @@ type Storage struct {
 	Values map[string]string // map[id]url
 }
 
-func GetStorage() (*Storage, error) {
-	if storage != nil {
-		return storage, nil
-	}
-
+func NewStorage() (*Storage, error) {
 	storage = &Storage{
 		Values: make(map[string]string),
 	}

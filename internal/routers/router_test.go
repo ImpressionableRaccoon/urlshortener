@@ -36,7 +36,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 func TestRouter(t *testing.T) {
 	// создаем хранилище
-	st, err := storage.GetStorage()
+	st, err := storage.NewStorage()
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func TestRouter(t *testing.T) {
 	st.Values["test"] = "https://google.com"
 
 	// создаем хендлер
-	handler, err := handlers.GetHandler()
+	handler, err := handlers.NewHandler(st)
 	if err != nil {
 		panic(err)
 	}

@@ -7,23 +7,12 @@ import (
 	"net/http"
 )
 
-var h *Handler
-
 type Handler struct {
 	st *storage.Storage
 }
 
-func GetHandler() (*Handler, error) {
-	if h != nil {
-		return h, nil
-	}
-
-	s, err := storage.GetStorage()
-	if err != nil {
-		return nil, err
-	}
-
-	h = &Handler{
+func NewHandler(s *storage.Storage) (*Handler, error) {
+	h := &Handler{
 		st: s,
 	}
 

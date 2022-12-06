@@ -14,12 +14,12 @@ const (
 
 func main() {
 	// создаем хранилище для коротких ссылок
-	_, err := storage.GetStorage()
+	s, err := storage.NewStorage()
 	if err != nil {
 		panic(err)
 	}
 	// создаем хендлер
-	handler, err := handlers.GetHandler()
+	handler, err := handlers.NewHandler(s)
 	if err != nil {
 		panic(err)
 	}
