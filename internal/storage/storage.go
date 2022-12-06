@@ -33,7 +33,7 @@ func GetStorage() (*Storage, error) {
 
 func (st *Storage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.Values[id] {
-		id, err = getRandomID()
+		id, err = st.getRandomID()
 		if err != nil {
 			return "", err
 		}
@@ -52,7 +52,7 @@ func (st *Storage) Get(id string) (url string, e error) {
 	return "", errors.New("URL not found")
 }
 
-func getRandomID() (string, error) {
+func (st *Storage) getRandomID() (string, error) {
 	rand.Seed(time.Now().UnixNano())
 	allowedCharactersLength := int32(len(allowedCharacters))
 	var b strings.Builder
