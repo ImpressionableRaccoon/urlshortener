@@ -13,12 +13,12 @@ type Handler struct {
 	st *storage.Storage
 }
 
-func NewHandler(s *storage.Storage) (*Handler, error) {
+func NewHandler(s *storage.Storage) *Handler {
 	h := &Handler{
 		st: s,
 	}
 
-	return h, nil
+	return h
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {

@@ -34,22 +34,12 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	st, err := storage.NewStorage()
-	if err != nil {
-		panic(err)
-	}
-
+	st := storage.NewStorage()
 	st.Values["test"] = "https://google.com"
 
-	handler, err := handlers.NewHandler(st)
-	if err != nil {
-		panic(err)
-	}
+	handler := handlers.NewHandler(st)
 
-	r, err := NewRouter(handler)
-	if err != nil {
-		panic(err)
-	}
+	r := NewRouter(handler)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

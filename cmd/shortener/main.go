@@ -10,20 +10,9 @@ import (
 )
 
 func main() {
-	s, err := storage.NewStorage()
-	if err != nil {
-		panic(err)
-	}
-
-	handler, err := handlers.NewHandler(s)
-	if err != nil {
-		panic(err)
-	}
-
-	r, err := routers.NewRouter(handler)
-	if err != nil {
-		panic(err)
-	}
+	s := storage.NewStorage()
+	handler := handlers.NewHandler(s)
+	r := routers.NewRouter(handler)
 
 	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
 }

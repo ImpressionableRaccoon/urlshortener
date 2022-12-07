@@ -17,12 +17,12 @@ type Storage struct {
 	Values map[string]string // map[id]url
 }
 
-func NewStorage() (*Storage, error) {
+func NewStorage() *Storage {
 	storage := &Storage{
 		Values: make(map[string]string),
 	}
 
-	return storage, nil
+	return storage
 }
 
 func (st *Storage) Add(url string) (id string, err error) {
