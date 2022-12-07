@@ -17,32 +17,32 @@ type id = string
 type url = string
 
 type Storage struct {
-	IdUrlsDictionary map[id]url
+	IDURLsDictionary map[id]url
 }
 
 func NewStorage() *Storage {
 	storage := &Storage{
-		IdUrlsDictionary: make(map[string]string),
+		IDURLsDictionary: make(map[string]string),
 	}
 
 	return storage
 }
 
 func (st *Storage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st.IdUrlsDictionary[id] {
+	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
 		id, err = st.getRandomID()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	st.IdUrlsDictionary[id] = url
+	st.IDURLsDictionary[id] = url
 
 	return id, nil
 }
 
 func (st *Storage) Get(id string) (string, error) {
-	url, ok := st.IdUrlsDictionary[id]
+	url, ok := st.IDURLsDictionary[id]
 	if ok {
 		return url, nil
 	}

@@ -21,7 +21,7 @@ func NewHandler(s *storage.Storage) *Handler {
 	return h
 }
 
-func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "ID")
 	if id == "" {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -38,7 +38,7 @@ func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *Handler) CreateShortUrl(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil || len(b) == 0 {
 		http.Error(w, "Bad request", http.StatusBadRequest)

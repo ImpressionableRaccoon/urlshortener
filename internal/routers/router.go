@@ -13,8 +13,8 @@ func NewRouter(handler *handlers.Handler) chi.Router {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", handler.CreateShortUrl)
-		r.Get("/{ID}", handler.GetUrl)
+		r.Post("/", handler.CreateShortURL)
+		r.Get("/{ID}", handler.GetURL)
 	})
 
 	return r
