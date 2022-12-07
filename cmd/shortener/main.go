@@ -11,8 +11,8 @@ import (
 
 func main() {
 	s := storage.NewStorage()
-	handler := handlers.NewHandler(s)
-	r := routers.NewRouter(handler)
+	h := handlers.NewHandler(s)
+	r := routers.NewRouter(h)
 
 	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
 }

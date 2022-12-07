@@ -13,33 +13,36 @@ const (
 	idLength          = 5
 )
 
+type id = string
+type url = string
+
 type Storage struct {
-	Values map[string]string // map[id]url
+	IdUrlsDictionary map[id]url
 }
 
 func NewStorage() *Storage {
 	storage := &Storage{
-		Values: make(map[string]string),
+		IdUrlsDictionary: make(map[string]string),
 	}
 
 	return storage
 }
 
 func (st *Storage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st.Values[id] {
+	for ok := true; ok; _, ok = st.IdUrlsDictionary[id] {
 		id, err = st.getRandomID()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	st.Values[id] = url
+	st.IdUrlsDictionary[id] = url
 
 	return id, nil
 }
 
-func (st *Storage) Get(id string) (url string, e error) {
-	url, ok := st.Values[id]
+func (st *Storage) Get(id string) (string, error) {
+	url, ok := st.IdUrlsDictionary[id]
 	if ok {
 		return url, nil
 	}

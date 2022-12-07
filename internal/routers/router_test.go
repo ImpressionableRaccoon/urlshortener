@@ -35,7 +35,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 func TestRouter(t *testing.T) {
 	st := storage.NewStorage()
-	st.Values["test"] = "https://google.com"
+	st.IdUrlsDictionary["test"] = "https://google.com"
 
 	handler := handlers.NewHandler(st)
 
@@ -47,7 +47,7 @@ func TestRouter(t *testing.T) {
 	t.Run("get test URL", func(t *testing.T) {
 		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/test", nil)
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, st.Values["test"], header.Get("Location"))
+		assert.Equal(t, st.IdUrlsDictionary["test"], header.Get("Location"))
 	})
 
 	t.Run("get URL by wrong ID", func(t *testing.T) {
