@@ -10,21 +10,20 @@ import (
 )
 
 func main() {
-	// создаем хранилище для коротких ссылок
 	s, err := storage.NewStorage()
 	if err != nil {
 		panic(err)
 	}
-	// создаем хендлер
+
 	handler, err := handlers.NewHandler(s)
 	if err != nil {
 		panic(err)
 	}
-	// создадем роутер
+
 	r, err := routers.NewRouter(handler)
 	if err != nil {
 		panic(err)
 	}
-	// запуск сервера
+
 	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
 }
