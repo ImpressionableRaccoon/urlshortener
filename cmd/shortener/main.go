@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
-	"log"
-	"net/http"
 )
 
 func main() {

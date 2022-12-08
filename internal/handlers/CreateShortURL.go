@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"io"
 	"net/http"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
 )
 
 func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {

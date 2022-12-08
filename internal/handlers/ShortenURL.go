@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"io"
 	"net/http"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
 )
 
 type ShortenURLRequest struct {

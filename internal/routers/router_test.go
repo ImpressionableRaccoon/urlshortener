@@ -2,15 +2,16 @@ package routers
 
 import (
 	"encoding/json"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, []byte, http.Header) {
