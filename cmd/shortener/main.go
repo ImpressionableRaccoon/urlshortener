@@ -14,5 +14,5 @@ func main() {
 	h := handlers.NewHandler(s)
 	r := routers.NewRouter(h)
 
-	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
+	log.Fatal(http.ListenAndServe(configs.GetServerAddress(), r))
 }
