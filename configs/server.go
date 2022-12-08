@@ -4,7 +4,7 @@ import "os"
 
 const (
 	serverAddress = ":8080"
-	serverURL     = "http://localhost:8080/"
+	serverURL     = "http://localhost:8080"
 )
 
 func GetServerAddress() string {

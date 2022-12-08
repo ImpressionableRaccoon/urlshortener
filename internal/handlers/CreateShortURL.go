@@ -20,7 +20,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s%s", configs.GetServerURL(), index)
+	url := fmt.Sprintf("%s/%s", configs.GetServerURL(), index)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(url))
