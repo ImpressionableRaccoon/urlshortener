@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"encoding/json"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ import (
 	"testing"
 )
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string, http.Header) {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, []byte, http.Header) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	require.NoError(t, err)
 
@@ -30,7 +31,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 	defer resp.Body.Close()
 
-	return resp.StatusCode, string(respBody), resp.Header
+	return resp.StatusCode, respBody, resp.Header
 }
 
 func TestRouter(t *testing.T) {
@@ -71,11 +72,43 @@ func TestRouter(t *testing.T) {
 	t.Run("get short link for URL", func(t *testing.T) {
 		statusCode, body, _ := testRequest(t, ts, http.MethodPost, "/", strings.NewReader(originalLink))
 		assert.Equal(t, http.StatusCreated, statusCode)
-		splitted := strings.Split(body, "/")
+		splitted := strings.Split(string(body), "/")
 		shortLinkID = splitted[len(splitted)-1]
 	})
 
 	t.Run("get URL from short link", func(t *testing.T) {
+		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/"+shortLinkID, nil)
+		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+		assert.Equal(t, originalLink, header.Get("Location"))
+	})
+
+	t.Run("API: get short link for URL", func(t *testing.T) {
+		request := handlers.ShortenURLRequest{
+			URL: originalLink,
+		}
+
+		requestJSON, err := json.Marshal(request)
+		if err != nil {
+			panic(err)
+		}
+
+		reader := strings.NewReader(string(requestJSON))
+
+		statusCode, body, _ := testRequest(t, ts, http.MethodPost, "/api/shorten", reader)
+		assert.Equal(t, http.StatusCreated, statusCode)
+
+		var response handlers.ShortenURLResponse
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			panic(err)
+		}
+
+		url := response.Result
+		splitted := strings.Split(url, "/")
+		shortLinkID = splitted[len(splitted)-1]
+	})
+
+	t.Run("API: get URL from short link", func(t *testing.T) {
 		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/"+shortLinkID, nil)
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
 		assert.Equal(t, originalLink, header.Get("Location"))

@@ -15,6 +15,10 @@ func NewRouter(handler *handlers.Handler) chi.Router {
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", handler.CreateShortURL)
 		r.Get("/{ID}", handler.GetURL)
+
+		r.Route("/api", func(r chi.Router) {
+			r.Post("/shorten", handler.ShortenURL)
+		})
 	})
 
 	return r
