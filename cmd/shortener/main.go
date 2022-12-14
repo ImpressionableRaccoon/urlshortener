@@ -18,8 +18,9 @@ func main() {
 	var s storage.Storage
 	var err error
 
-	path, ok := configs.GetFileStoragePath()
-	if ok {
+	configs.Load()
+
+	if path := configs.FileStoragePath; path != "" {
 		s, err = file.NewStorage(path)
 	} else {
 		s, err = memory.NewStorage()
@@ -31,5 +32,5 @@ func main() {
 	h := handlers.NewHandler(s)
 	r := routers.NewRouter(h)
 
-	log.Fatal(http.ListenAndServe(configs.GetServerAddress(), r))
+	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
 }

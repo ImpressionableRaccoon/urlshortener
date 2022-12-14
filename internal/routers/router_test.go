@@ -2,12 +2,15 @@ package routers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
 
@@ -86,6 +89,7 @@ func TestRouter(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, statusCode)
 		splitted := strings.Split(string(body), "/")
 		shortLinkID = splitted[len(splitted)-1]
+		assert.Equal(t, fmt.Sprintf("%s/%s", configs.ServerBaseURL, shortLinkID), string(body))
 	})
 
 	t.Run("get URL from short link", func(t *testing.T) {

@@ -39,7 +39,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", configs.GetServerURL(), index)
+	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, index)
 
 	response := &ShortenURLResponse{
 		Result: url,

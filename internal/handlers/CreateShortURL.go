@@ -22,7 +22,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", configs.GetServerURL(), index)
+	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, index)
 
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(url))

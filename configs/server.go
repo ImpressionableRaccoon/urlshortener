@@ -1,26 +1,39 @@
 package configs
 
-import "os"
-
-const (
-	serverAddress = ":8080"
-	serverURL     = "http://localhost:8080"
+import (
+	"flag"
+	"os"
 )
 
-func GetServerAddress() string {
+var (
+	ServerAddress   = ":8080"
+	ServerBaseURL   = "http://localhost:8080"
+	FileStoragePath = ""
+)
+
+func Load() {
+	loadEnv()
+	loadArgs()
+}
+
+func loadEnv() {
 	if s, ok := os.LookupEnv("SERVER_ADDRESS"); ok {
-		return s
+		ServerAddress = s
 	}
-	return serverAddress
-}
 
-func GetServerURL() string {
 	if s, ok := os.LookupEnv("BASE_URL"); ok {
-		return s
+		ServerBaseURL = s
 	}
-	return serverURL
+
+	if s, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
+		FileStoragePath = s
+	}
 }
 
-func GetFileStoragePath() (string, bool) {
-	return os.LookupEnv("FILE_STORAGE_PATH")
+func loadArgs() {
+	flag.StringVar(&ServerAddress, "a", ServerAddress, "server address")
+	flag.StringVar(&ServerBaseURL, "b", ServerBaseURL, "server base url")
+	flag.StringVar(&FileStoragePath, "f", FileStoragePath, "file storage path")
+
+	flag.Parse()
 }
