@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
+
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,11 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	st := storage.NewStorage()
+	st, err := memory.NewStorage()
+	if err != nil {
+		panic(err)
+	}
+
 	st.IDURLsDictionary["test"] = "https://google.com"
 
 	handler := handlers.NewHandler(st)

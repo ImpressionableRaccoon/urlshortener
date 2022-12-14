@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -13,43 +12,15 @@ const (
 	idLength          = 5
 )
 
-type id = string
-type url = string
+type ID = string
+type URL = string
 
-type Storage struct {
-	IDURLsDictionary map[id]url
+type Storage interface {
+	Add(url string) (id string, err error)
+	Get(id string) (string, error)
 }
 
-func NewStorage() *Storage {
-	storage := &Storage{
-		IDURLsDictionary: make(map[string]string),
-	}
-
-	return storage
-}
-
-func (st *Storage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
-		id, err = st.getRandomID()
-		if err != nil {
-			return "", err
-		}
-	}
-
-	st.IDURLsDictionary[id] = url
-
-	return id, nil
-}
-
-func (st *Storage) Get(id string) (string, error) {
-	url, ok := st.IDURLsDictionary[id]
-	if ok {
-		return url, nil
-	}
-	return "", errors.New("URL not found")
-}
-
-func (st *Storage) getRandomID() (string, error) {
+func GetRandomID() (string, error) {
 	rand.Seed(time.Now().UnixNano())
 	allowedCharactersLength := int32(len(allowedCharacters))
 	var b strings.Builder

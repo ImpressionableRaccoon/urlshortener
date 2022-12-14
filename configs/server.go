@@ -22,3 +22,7 @@ func GetServerURL() string {
 	}
 	return serverURL
 }
+
+func GetFileStoragePath() (string, bool) {
+	return os.LookupEnv("FILE_STORAGE_PATH")
+}
