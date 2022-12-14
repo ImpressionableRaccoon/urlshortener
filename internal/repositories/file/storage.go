@@ -3,7 +3,6 @@ package file
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -49,7 +48,6 @@ func NewStorage(filename string) (*Storage, error) {
 		sURL := strings.Trim(string(url), "\n")
 
 		st.IDURLsDictionary[sID] = sURL
-		fmt.Println(string(id), string(url))
 	}
 
 	return st, nil
@@ -80,4 +78,8 @@ func (st *Storage) Get(id string) (string, error) {
 		return url, nil
 	}
 	return "", errors.New("URL not found")
+}
+
+func (st *Storage) Close() error {
+	return st.file.Close()
 }
