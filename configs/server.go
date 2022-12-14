@@ -8,16 +8,14 @@ const (
 )
 
 func GetServerAddress() string {
-	s, ok := os.LookupEnv("SERVER_ADDRESS")
-	if ok {
+	if s, ok := os.LookupEnv("SERVER_ADDRESS"); ok {
 		return s
 	}
 	return serverAddress
 }
 
 func GetServerURL() string {
-	s, ok := os.LookupEnv("BASE_URL")
-	if ok {
+	if s, ok := os.LookupEnv("BASE_URL"); ok {
 		return s
 	}
 	return serverURL

@@ -16,13 +16,19 @@ func TestStorage(t *testing.T) {
 	url := "testURL"
 	var id string
 
+	t.Run("URL not found", func(t *testing.T) {
+		r, err := st.Get("test")
+		require.NotNil(t, err)
+		assert.Equal(t, "", r)
+	})
+
 	t.Run("short link", func(t *testing.T) {
 		r, err := st.Add(url)
 		require.Nil(t, err)
 		id = r
 	})
 
-	t.Run("get testURL", func(t *testing.T) {
+	t.Run("get test URL", func(t *testing.T) {
 		r, err := st.Get(id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
@@ -34,7 +40,7 @@ func TestStorage(t *testing.T) {
 	st, err = NewStorage(filename)
 	require.Nil(t, err)
 
-	t.Run("get testURL after restart", func(t *testing.T) {
+	t.Run("get test URL after restart", func(t *testing.T) {
 		r, err := st.Get(id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
@@ -45,4 +51,10 @@ func TestStorage(t *testing.T) {
 
 	err = os.Remove(filename)
 	require.Nil(t, err)
+
+	t.Run("empty file storage", func(t *testing.T) {
+		st, err := NewStorage("")
+		assert.NotNil(t, err)
+		assert.Nil(t, st)
+	})
 }

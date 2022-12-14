@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
-	"log"
-	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/file"
 
@@ -16,7 +17,7 @@ import (
 func main() {
 	var s storage.Storage
 	var err error
-	
+
 	path, ok := configs.GetFileStoragePath()
 	if ok {
 		s, err = file.NewStorage(path)

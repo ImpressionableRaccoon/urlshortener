@@ -13,6 +13,12 @@ func TestStorage(t *testing.T) {
 	url := "testURL"
 	var id string
 
+	t.Run("URL not found", func(t *testing.T) {
+		r, err := st.Get("test")
+		require.NotNil(t, err)
+		assert.Equal(t, "", r)
+	})
+
 	t.Run("short link", func(t *testing.T) {
 		r, err := st.Add(url)
 		require.Nil(t, err)

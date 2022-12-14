@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
@@ -55,7 +57,7 @@ func NewStorage(filename string) (*Storage, error) {
 
 func (st *Storage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
-		id, err = storage.GetRandomID()
+		id, err = utils.GetRandomID()
 		if err != nil {
 			return "", err
 		}
@@ -67,7 +69,10 @@ func (st *Storage) Add(url string) (id string, err error) {
 	if _, err := st.writer.Write(data); err != nil {
 		return "", err
 	}
-	st.writer.Flush()
+	err = st.writer.Flush()
+	if err != nil {
+		return "", err
+	}
 
 	return id, nil
 }

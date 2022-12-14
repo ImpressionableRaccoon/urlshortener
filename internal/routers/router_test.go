@@ -3,6 +3,7 @@ package routers
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -31,7 +32,12 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	return resp.StatusCode, respBody, resp.Header
 }

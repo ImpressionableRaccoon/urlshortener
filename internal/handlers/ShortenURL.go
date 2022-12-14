@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -52,5 +53,8 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(responseJSON)
+	_, err = w.Write(responseJSON)
+	if err != nil {
+		log.Printf("ShortenURL write failed: %v", err)
+	}
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -24,5 +25,8 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s/%s", configs.GetServerURL(), index)
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(url))
+	_, err = w.Write([]byte(url))
+	if err != nil {
+		log.Printf("CreateShortURL write failed: %v", err)
+	}
 }

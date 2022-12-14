@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type Storage struct {
@@ -20,7 +21,7 @@ func NewStorage() (*Storage, error) {
 
 func (st *Storage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
-		id, err = storage.GetRandomID()
+		id, err = utils.GetRandomID()
 		if err != nil {
 			return "", err
 		}
