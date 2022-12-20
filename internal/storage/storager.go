@@ -10,7 +10,7 @@ type Storager interface {
 	Get(id string) (string, error)
 }
 
-func NewStorage() (Storager, error) {
+func NewStorager() (Storager, error) {
 	var s Storager
 	var err error
 

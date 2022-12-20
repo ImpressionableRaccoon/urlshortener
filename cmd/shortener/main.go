@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	s, err := storage.NewStorage()
+	s, err := storage.NewStorager()
 	if err != nil {
 		panic(err)
 	}

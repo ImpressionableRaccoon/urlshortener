@@ -46,7 +46,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	s, err := storage.NewStorage()
+	s, err := storage.NewStorager()
 	if err != nil {
 		panic(err)
 	}
