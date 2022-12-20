@@ -1,4 +1,4 @@
-package file
+package repositories
 
 import (
 	"bufio"
@@ -8,23 +8,21 @@ import (
 	"strings"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
-
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
-type Storage struct {
-	IDURLsDictionary map[storage.ID]storage.URL
+type FileStorage struct {
+	IDURLsDictionary map[ID]URL
 	file             *os.File
 	writer           *bufio.Writer
 }
 
-func NewStorage(filename string) (*Storage, error) {
+func NewFileStorage(filename string) (*FileStorage, error) {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, err
 	}
 
-	st := &Storage{
+	st := &FileStorage{
 		IDURLsDictionary: make(map[string]string),
 		file:             file,
 		writer:           bufio.NewWriter(file),
@@ -55,7 +53,7 @@ func NewStorage(filename string) (*Storage, error) {
 	return st, nil
 }
 
-func (st *Storage) Add(url string) (id string, err error) {
+func (st *FileStorage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -77,7 +75,7 @@ func (st *Storage) Add(url string) (id string, err error) {
 	return id, nil
 }
 
-func (st *Storage) Get(id string) (string, error) {
+func (st *FileStorage) Get(id string) (string, error) {
 	url, ok := st.IDURLsDictionary[id]
 	if ok {
 		return url, nil
@@ -85,6 +83,6 @@ func (st *Storage) Get(id string) (string, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *Storage) Close() error {
+func (st *FileStorage) Close() error {
 	return st.file.Close()
 }

@@ -1,25 +1,24 @@
-package memory
+package repositories
 
 import (
 	"errors"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
-type Storage struct {
-	IDURLsDictionary map[storage.ID]storage.URL
+type MemStorage struct {
+	IDURLsDictionary map[ID]URL
 }
 
-func NewStorage() (*Storage, error) {
-	st := &Storage{
+func NewMemoryStorage() (*MemStorage, error) {
+	st := &MemStorage{
 		IDURLsDictionary: make(map[string]string),
 	}
 
 	return st, nil
 }
 
-func (st *Storage) Add(url string) (id string, err error) {
+func (st *MemStorage) Add(url string) (id string, err error) {
 	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -32,7 +31,7 @@ func (st *Storage) Add(url string) (id string, err error) {
 	return id, nil
 }
 
-func (st *Storage) Get(id string) (string, error) {
+func (st *MemStorage) Get(id string) (string, error) {
 	url, ok := st.IDURLsDictionary[id]
 	if ok {
 		return url, nil

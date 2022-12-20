@@ -5,10 +5,10 @@ import (
 )
 
 type Handler struct {
-	st storage.Storage
+	st storage.Storager
 }
 
-func NewHandler(s storage.Storage) *Handler {
+func NewHandler(s storage.Storager) *Handler {
 	h := &Handler{
 		st: s,
 	}

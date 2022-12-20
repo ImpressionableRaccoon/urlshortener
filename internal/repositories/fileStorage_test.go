@@ -1,4 +1,4 @@
-package file
+package repositories
 
 import (
 	"os"
@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStorage(t *testing.T) {
+func TestFileStorage(t *testing.T) {
 	filename := "testingStorage"
-	st, err := NewStorage(filename)
+	st, err := NewFileStorage(filename)
 	require.Nil(t, err)
 
 	url := "testURL"
@@ -37,7 +37,7 @@ func TestStorage(t *testing.T) {
 	err = st.Close()
 	require.Nil(t, err)
 
-	st, err = NewStorage(filename)
+	st, err = NewFileStorage(filename)
 	require.Nil(t, err)
 
 	t.Run("get test URL after restart", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("empty file storage", func(t *testing.T) {
-		st, err := NewStorage("")
+		st, err := NewFileStorage("")
 		assert.NotNil(t, err)
 		assert.Nil(t, st)
 	})

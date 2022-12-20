@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/stretchr/testify/assert"
@@ -46,24 +46,27 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	st, err := memory.NewStorage()
+	s, err := storage.NewStorage()
 	if err != nil {
 		panic(err)
 	}
 
-	st.IDURLsDictionary["test"] = "https://google.com"
+	testURL := "https://google.com"
+	testID, err := s.Add(testURL)
+	if err != nil {
+		panic(err)
+	}
 
-	handler := handlers.NewHandler(st)
-
-	r := NewRouter(handler)
+	h := handlers.NewHandler(s)
+	r := NewRouter(h)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	t.Run("get test URL", func(t *testing.T) {
-		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/test", nil)
+		statusCode, _, header := testRequest(t, ts, http.MethodGet, fmt.Sprintf("/%s", testID), nil)
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, st.IDURLsDictionary["test"], header.Get("Location"))
+		assert.Equal(t, testURL, header.Get("Location"))
 	})
 
 	t.Run("get URL by wrong ID", func(t *testing.T) {

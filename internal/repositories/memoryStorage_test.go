@@ -1,4 +1,4 @@
-package memory
+package repositories
 
 import (
 	"testing"
@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStorage(t *testing.T) {
-	st, _ := NewStorage()
+func TestMemoryStorage(t *testing.T) {
+	st, _ := NewMemoryStorage()
 
 	url := "testURL"
 	var id string
