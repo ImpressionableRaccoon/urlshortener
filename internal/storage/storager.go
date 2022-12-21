@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"os"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
@@ -17,13 +19,20 @@ func NewStorager() (Storager, error) {
 	configs.Load()
 
 	if path := configs.FileStoragePath; path != "" {
-		s, err = repositories.NewFileStorage(path)
+		var file *os.File
+
+		file, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0777)
+		if err != nil {
+			return nil, err
+		}
+
+		s, err = repositories.NewFileStorage(file)
 	} else {
 		s, err = repositories.NewMemoryStorage()
 	}
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return s, err
+	return s, nil
 }

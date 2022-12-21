@@ -10,7 +10,13 @@ import (
 
 func TestFileStorage(t *testing.T) {
 	filename := "testingStorage"
-	st, err := NewFileStorage(filename)
+
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
+	if err != nil {
+		panic(err)
+	}
+
+	st, err := NewFileStorage(file)
 	require.Nil(t, err)
 
 	url := "testURL"
@@ -37,7 +43,12 @@ func TestFileStorage(t *testing.T) {
 	err = st.Close()
 	require.Nil(t, err)
 
-	st, err = NewFileStorage(filename)
+	file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
+	if err != nil {
+		panic(err)
+	}
+
+	st, err = NewFileStorage(file)
 	require.Nil(t, err)
 
 	t.Run("get test URL after restart", func(t *testing.T) {
@@ -53,7 +64,7 @@ func TestFileStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("empty file storage", func(t *testing.T) {
-		st, err := NewFileStorage("")
+		st, err := NewFileStorage(nil)
 		assert.NotNil(t, err)
 		assert.Nil(t, st)
 	})

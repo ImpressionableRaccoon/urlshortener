@@ -16,12 +16,7 @@ type FileStorage struct {
 	writer           *bufio.Writer
 }
 
-func NewFileStorage(filename string) (*FileStorage, error) {
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
-	if err != nil {
-		return nil, err
-	}
-
+func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		IDURLsDictionary: make(map[string]string),
 		file:             file,
