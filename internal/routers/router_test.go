@@ -1,18 +1,25 @@
 package routers
 
 import (
-	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string, http.Header) {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, []byte, http.Header) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	require.NoError(t, err)
 
@@ -28,26 +35,38 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	return resp.StatusCode, string(respBody), resp.Header
+	return resp.StatusCode, respBody, resp.Header
 }
 
 func TestRouter(t *testing.T) {
-	st := storage.NewStorage()
-	st.IDURLsDictionary["test"] = "https://google.com"
+	s, err := storage.NewStorager()
+	if err != nil {
+		panic(err)
+	}
 
-	handler := handlers.NewHandler(st)
+	testURL := "https://google.com"
+	testID, err := s.Add(testURL)
+	if err != nil {
+		panic(err)
+	}
 
-	r := NewRouter(handler)
+	h := handlers.NewHandler(s)
+	r := NewRouter(h)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	t.Run("get test URL", func(t *testing.T) {
-		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/test", nil)
+		statusCode, _, header := testRequest(t, ts, http.MethodGet, fmt.Sprintf("/%s", testID), nil)
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, st.IDURLsDictionary["test"], header.Get("Location"))
+		assert.Equal(t, testURL, header.Get("Location"))
 	})
 
 	t.Run("get URL by wrong ID", func(t *testing.T) {
@@ -71,11 +90,44 @@ func TestRouter(t *testing.T) {
 	t.Run("get short link for URL", func(t *testing.T) {
 		statusCode, body, _ := testRequest(t, ts, http.MethodPost, "/", strings.NewReader(originalLink))
 		assert.Equal(t, http.StatusCreated, statusCode)
-		splitted := strings.Split(body, "/")
+		splitted := strings.Split(string(body), "/")
 		shortLinkID = splitted[len(splitted)-1]
+		assert.Equal(t, fmt.Sprintf("%s/%s", configs.ServerBaseURL, shortLinkID), string(body))
 	})
 
 	t.Run("get URL from short link", func(t *testing.T) {
+		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/"+shortLinkID, nil)
+		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+		assert.Equal(t, originalLink, header.Get("Location"))
+	})
+
+	t.Run("API: get short link for URL", func(t *testing.T) {
+		request := handlers.ShortenURLRequest{
+			URL: originalLink,
+		}
+
+		requestJSON, err := json.Marshal(request)
+		if err != nil {
+			panic(err)
+		}
+
+		reader := strings.NewReader(string(requestJSON))
+
+		statusCode, body, _ := testRequest(t, ts, http.MethodPost, "/api/shorten", reader)
+		assert.Equal(t, http.StatusCreated, statusCode)
+
+		var response handlers.ShortenURLResponse
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			panic(err)
+		}
+
+		url := response.Result
+		splitted := strings.Split(url, "/")
+		shortLinkID = splitted[len(splitted)-1]
+	})
+
+	t.Run("API: get URL from short link", func(t *testing.T) {
 		statusCode, _, header := testRequest(t, ts, http.MethodGet, "/"+shortLinkID, nil)
 		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
 		assert.Equal(t, originalLink, header.Get("Location"))
