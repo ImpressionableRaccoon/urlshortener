@@ -11,55 +11,58 @@ import (
 )
 
 type FileStorage struct {
-	IDURLsDictionary map[ID]URL
-	file             *os.File
-	writer           *bufio.Writer
+	IDLinkDataDictionary map[ID]LinkData
+	UserIDs              []UserID
+	file                 *os.File
+	writer               *bufio.Writer
 }
 
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
-		IDURLsDictionary: make(map[string]string),
-		file:             file,
-		writer:           bufio.NewWriter(file),
+		IDLinkDataDictionary: make(map[ID]LinkData),
+		file:                 file,
+		writer:               bufio.NewWriter(file),
 	}
 
 	reader := bufio.NewReader(file)
 
 	for {
-		id, err := reader.ReadBytes(',')
+		bytes, err := reader.ReadBytes('\n')
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return nil, err
 		}
+		line := strings.Trim(string(bytes), "\n")
+		splitted := strings.Split(line, ",")
 
-		url, err := reader.ReadBytes('\n')
-		if err != nil {
-			return nil, err
+		st.IDLinkDataDictionary[splitted[0]] = LinkData{
+			URL:    splitted[1],
+			UserID: splitted[2],
 		}
 
-		sID := strings.Trim(string(id), ",")
-		sURL := strings.Trim(string(url), "\n")
-
-		st.IDURLsDictionary[sID] = sURL
+		// TODO: нам надо еще UserID отсюда сохранять в UserIDs
 	}
 
 	return st, nil
 }
 
-func (st *FileStorage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
+func (st *FileStorage) Add(url URL, userID UserID) (id ID, err error) {
+	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	st.IDURLsDictionary[id] = url
+	st.IDLinkDataDictionary[id] = LinkData{
+		URL:    url,
+		UserID: userID,
+	}
 
-	data := []byte(id + "," + url + "\n")
-	if _, err := st.writer.Write(data); err != nil {
+	data := []byte(id + "," + url + "," + userID + "\n")
+	if _, err = st.writer.Write(data); err != nil {
 		return "", err
 	}
 	err = st.writer.Flush()
@@ -70,10 +73,10 @@ func (st *FileStorage) Add(url string) (id string, err error) {
 	return id, nil
 }
 
-func (st *FileStorage) Get(id string) (string, error) {
-	url, ok := st.IDURLsDictionary[id]
+func (st *FileStorage) Get(id ID) (URL, error) {
+	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
-		return url, nil
+		return data.URL, nil
 	}
 	return "", errors.New("URL not found")
 }

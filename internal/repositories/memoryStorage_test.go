@@ -20,7 +20,7 @@ func TestMemoryStorage(t *testing.T) {
 	})
 
 	t.Run("short link", func(t *testing.T) {
-		r, err := st.Add(url)
+		r, err := st.Add(url, "")
 		require.Nil(t, err)
 		id = r
 	})

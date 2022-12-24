@@ -7,34 +7,39 @@ import (
 )
 
 type MemStorage struct {
-	IDURLsDictionary map[ID]URL
+	IDLinkDataDictionary map[ID]LinkData
+	UserIDs              []UserID
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
-		IDURLsDictionary: make(map[string]string),
+		IDLinkDataDictionary: make(map[ID]LinkData),
 	}
 
 	return st, nil
 }
 
-func (st *MemStorage) Add(url string) (id string, err error) {
-	for ok := true; ok; _, ok = st.IDURLsDictionary[id] {
+func (st *MemStorage) Add(url URL, userID UserID) (id ID, err error) {
+	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	st.IDURLsDictionary[id] = url
+	st.IDLinkDataDictionary[id] = LinkData{
+		URL:    url,
+		UserID: userID,
+	}
 
 	return id, nil
 }
 
-func (st *MemStorage) Get(id string) (string, error) {
-	url, ok := st.IDURLsDictionary[id]
+func (st *MemStorage) Get(id ID) (string, error) {
+	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
-		return url, nil
+		return data.URL, nil
 	}
+
 	return "", errors.New("URL not found")
 }

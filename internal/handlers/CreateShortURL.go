@@ -16,7 +16,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := h.st.Add(string(b))
+	index, err := h.st.Add(string(b), "")
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

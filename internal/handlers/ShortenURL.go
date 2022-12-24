@@ -33,7 +33,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := h.st.Add(requestData.URL)
+	index, err := h.st.Add(requestData.URL, "")
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

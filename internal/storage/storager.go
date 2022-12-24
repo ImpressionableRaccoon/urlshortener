@@ -8,8 +8,8 @@ import (
 )
 
 type Storager interface {
-	Add(url string) (id string, err error)
-	Get(id string) (string, error)
+	Add(url repositories.URL, userID repositories.UserID) (id repositories.ID, err error)
+	Get(id repositories.ID) (repositories.URL, error)
 }
 
 func NewStorager() (Storager, error) {

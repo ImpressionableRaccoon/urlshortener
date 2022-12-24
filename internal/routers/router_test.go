@@ -52,7 +52,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	testURL := "https://google.com"
-	testID, err := s.Add(testURL)
+	testID, err := s.Add(testURL, "")
 	if err != nil {
 		panic(err)
 	}
