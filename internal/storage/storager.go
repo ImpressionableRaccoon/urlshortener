@@ -10,6 +10,7 @@ import (
 type Storager interface {
 	Add(url repositories.URL, userID repositories.UserID) (id repositories.ID, err error)
 	Get(id repositories.ID) (repositories.URL, error)
+	IsUserExists(userID repositories.UserID) bool
 }
 
 func NewStorager() (Storager, error) {

@@ -8,12 +8,13 @@ import (
 
 type MemStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
-	UserIDs              []UserID
+	UserIDs              map[UserID]bool
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
+		UserIDs:              make(map[UserID]bool),
 	}
 
 	return st, nil
@@ -42,4 +43,8 @@ func (st *MemStorage) Get(id ID) (string, error) {
 	}
 
 	return "", errors.New("URL not found")
+}
+
+func (st *MemStorage) IsUserExists(userID UserID) bool {
+	return st.UserIDs[userID]
 }

@@ -12,7 +12,7 @@ import (
 
 type FileStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
-	UserIDs              []UserID
+	UserIDs              map[UserID]bool
 	file                 *os.File
 	writer               *bufio.Writer
 }
@@ -20,6 +20,7 @@ type FileStorage struct {
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
+		UserIDs:              make(map[UserID]bool),
 		file:                 file,
 		writer:               bufio.NewWriter(file),
 	}
@@ -37,12 +38,15 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 		line := strings.Trim(string(bytes), "\n")
 		splitted := strings.Split(line, ",")
 
-		st.IDLinkDataDictionary[splitted[0]] = LinkData{
-			URL:    splitted[1],
-			UserID: splitted[2],
-		}
+		id := splitted[0]
+		url := splitted[1]
+		userID := splitted[2]
 
-		// TODO: нам надо еще UserID отсюда сохранять в UserIDs
+		st.IDLinkDataDictionary[id] = LinkData{
+			URL:    url,
+			UserID: userID,
+		}
+		st.UserIDs[userID] = true
 	}
 
 	return st, nil
@@ -60,6 +64,7 @@ func (st *FileStorage) Add(url URL, userID UserID) (id ID, err error) {
 		URL:    url,
 		UserID: userID,
 	}
+	st.UserIDs[userID] = true
 
 	data := []byte(id + "," + url + "," + userID + "\n")
 	if _, err = st.writer.Write(data); err != nil {
@@ -79,6 +84,10 @@ func (st *FileStorage) Get(id ID) (URL, error) {
 		return data.URL, nil
 	}
 	return "", errors.New("URL not found")
+}
+
+func (st *FileStorage) IsUserExists(userID UserID) bool {
+	return st.UserIDs[userID]
 }
 
 func (st *FileStorage) Close() error {
