@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
@@ -47,5 +48,9 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(m)
+	w.Header().Set("content-type", "application/json")
+	_, err = w.Write(m)
+	if err != nil {
+		log.Printf("ShortenURL write failed: %v", err)
+	}
 }
