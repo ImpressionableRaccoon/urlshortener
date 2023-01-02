@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserKey struct{}
+
 func UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("USER")
@@ -22,7 +24,7 @@ func UserCookie(next http.Handler) http.Handler {
 				http.Error(w, "Server error", http.StatusInternalServerError)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "user", user)
+			ctx := context.WithValue(r.Context(), UserKey{}, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -39,7 +41,7 @@ func UserCookie(next http.Handler) http.Handler {
 				http.Error(w, "Server error", http.StatusInternalServerError)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "user", user)
+			ctx := context.WithValue(r.Context(), UserKey{}, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -54,7 +56,7 @@ func UserCookie(next http.Handler) http.Handler {
 				http.Error(w, "Server error", http.StatusInternalServerError)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "user", user)
+			ctx := context.WithValue(r.Context(), UserKey{}, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -65,7 +67,7 @@ func UserCookie(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", user.String())
+		ctx := context.WithValue(r.Context(), UserKey{}, user.String())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

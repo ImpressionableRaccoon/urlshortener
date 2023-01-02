@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
+
 	"github.com/google/uuid"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -35,7 +37,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uuid.Parse(r.Context().Value("user").(string))
+	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

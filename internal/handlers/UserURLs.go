@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 
@@ -17,7 +19,7 @@ type userLink struct {
 }
 
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
-	user, err := uuid.Parse(r.Context().Value("user").(string))
+	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
