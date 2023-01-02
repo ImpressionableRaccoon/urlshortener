@@ -86,7 +86,7 @@ func TestRouter(t *testing.T) {
 		assert.Equal(t, http.StatusMethodNotAllowed, statusCode)
 	})
 
-	originalLink := "https://impressionablracoon.com"
+	originalLink := "https://example.com"
 	var shortLinkID string
 
 	t.Run("get short link for URL", func(t *testing.T) {
