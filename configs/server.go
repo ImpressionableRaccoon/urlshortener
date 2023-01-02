@@ -9,6 +9,7 @@ var (
 	ServerAddress   = ":8080"
 	ServerBaseURL   = "http://localhost:8080"
 	FileStoragePath = ""
+	CookieKey       = []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179}
 )
 
 func Load() {

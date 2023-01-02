@@ -3,6 +3,8 @@ package repositories
 import (
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +22,7 @@ func TestMemoryStorage(t *testing.T) {
 	})
 
 	t.Run("short link", func(t *testing.T) {
-		r, err := st.Add(url, "")
+		r, err := st.Add(url, uuid.New())
 		require.Nil(t, err)
 		id = r
 	})

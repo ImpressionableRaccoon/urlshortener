@@ -8,19 +8,19 @@ import (
 
 type MemStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
-	UserIDs              map[UserID]bool
+	UserIDs              map[User]bool
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
-		UserIDs:              make(map[UserID]bool),
+		UserIDs:              make(map[User]bool),
 	}
 
 	return st, nil
 }
 
-func (st *MemStorage) Add(url URL, userID UserID) (id ID, err error) {
+func (st *MemStorage) Add(url URL, userID User) (id ID, err error) {
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -29,8 +29,8 @@ func (st *MemStorage) Add(url URL, userID UserID) (id ID, err error) {
 	}
 
 	st.IDLinkDataDictionary[id] = LinkData{
-		URL:    url,
-		UserID: userID,
+		URL:  url,
+		User: userID,
 	}
 
 	return id, nil
@@ -45,6 +45,23 @@ func (st *MemStorage) Get(id ID) (string, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *MemStorage) IsUserExists(userID UserID) bool {
+func (st *MemStorage) GetUserLinks(user User) (data []UserLink) {
+	data = make([]UserLink, 0)
+
+	for id, value := range st.IDLinkDataDictionary {
+		if value.User != user {
+			continue
+		}
+
+		data = append(data, UserLink{
+			ID:  id,
+			URL: value.URL,
+		})
+	}
+
+	return
+}
+
+func (st *MemStorage) IsUserExists(userID User) bool {
 	return st.UserIDs[userID]
 }

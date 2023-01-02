@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -52,7 +54,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	testURL := "https://google.com"
-	testID, err := s.Add(testURL, "")
+	testID, err := s.Add(testURL, uuid.New())
 	if err != nil {
 		panic(err)
 	}

@@ -8,9 +8,10 @@ import (
 )
 
 type Storager interface {
-	Add(url repositories.URL, userID repositories.UserID) (id repositories.ID, err error)
+	Add(url repositories.URL, userID repositories.User) (repositories.ID, error)
 	Get(id repositories.ID) (repositories.URL, error)
-	IsUserExists(userID repositories.UserID) bool
+	GetUserLinks(user repositories.User) []repositories.UserLink
+	IsUserExists(userID repositories.User) bool
 }
 
 func NewStorager() (Storager, error) {

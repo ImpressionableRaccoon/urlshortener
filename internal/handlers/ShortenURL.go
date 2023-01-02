@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 )
 
@@ -33,13 +35,19 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := h.st.Add(requestData.URL, "")
+	user, err := uuid.Parse(r.Context().Value("user").(string))
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, index)
+	id, err := h.st.Add(requestData.URL, user)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, id)
 
 	response := &ShortenURLResponse{
 		Result: url,
