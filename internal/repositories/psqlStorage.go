@@ -23,8 +23,5 @@ func ConnectPSQL() {
 }
 
 func PoolPSQL() bool {
-	if db.Ping(context.Background()) == nil {
-		return true
-	}
-	return false
+	return db.Ping(context.Background()) == nil
 }
