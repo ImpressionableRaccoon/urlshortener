@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type userLink struct {
+type UserLink struct {
 	ShortURL    repositories.URL `json:"short_url"`
 	OriginalURL repositories.URL `json:"original_url"`
 }
@@ -33,10 +33,10 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkURLs := make([]userLink, 0)
+	linkURLs := make([]UserLink, 0)
 
 	for _, link := range links {
-		linkURLs = append(linkURLs, userLink{
+		linkURLs = append(linkURLs, UserLink{
 			ShortURL:    fmt.Sprintf("%s/%s", configs.ServerBaseURL, link.ID),
 			OriginalURL: link.URL,
 		})
