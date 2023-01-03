@@ -36,7 +36,8 @@ func TestMemoryStorage(t *testing.T) {
 	})
 
 	t.Run("get testURL from user URLs", func(t *testing.T) {
-		r := st.GetUserLinks(testUser)
+		r, err := st.GetUserLinks(testUser)
+		require.Nil(t, err)
 		assert.Contains(t, r, UserLink{
 			ID:  id,
 			URL: url,

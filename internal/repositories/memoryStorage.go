@@ -8,13 +8,11 @@ import (
 
 type MemStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
-	UserIDs              map[User]bool
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
-		UserIDs:              make(map[User]bool),
 	}
 
 	return st, nil
@@ -45,7 +43,7 @@ func (st *MemStorage) Get(id ID) (string, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *MemStorage) GetUserLinks(user User) (data []UserLink) {
+func (st *MemStorage) GetUserLinks(user User) (data []UserLink, err error) {
 	data = make([]UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
@@ -60,10 +58,6 @@ func (st *MemStorage) GetUserLinks(user User) (data []UserLink) {
 	}
 
 	return
-}
-
-func (st *MemStorage) IsUserExists(userID User) bool {
-	return st.UserIDs[userID]
 }
 
 func (st *MemStorage) Pool() bool {

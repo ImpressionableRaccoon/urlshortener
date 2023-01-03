@@ -14,7 +14,6 @@ import (
 
 type FileStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
-	UserIDs              map[User]bool
 	file                 *os.File
 	writer               *bufio.Writer
 }
@@ -22,7 +21,6 @@ type FileStorage struct {
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
-		UserIDs:              make(map[User]bool),
 		file:                 file,
 		writer:               bufio.NewWriter(file),
 	}
@@ -52,7 +50,6 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 			URL:  url,
 			User: userID,
 		}
-		st.UserIDs[userID] = true
 	}
 
 	return st, nil
@@ -70,7 +67,6 @@ func (st *FileStorage) Add(url URL, userID User) (id ID, err error) {
 		URL:  url,
 		User: userID,
 	}
-	st.UserIDs[userID] = true
 
 	data := []byte(id + "," + url + "," + userID.String() + "\n")
 	if _, err = st.writer.Write(data); err != nil {
@@ -92,7 +88,7 @@ func (st *FileStorage) Get(id ID) (URL, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *FileStorage) GetUserLinks(user User) (data []UserLink) {
+func (st *FileStorage) GetUserLinks(user User) (data []UserLink, err error) {
 	data = make([]UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
@@ -107,10 +103,6 @@ func (st *FileStorage) GetUserLinks(user User) (data []UserLink) {
 	}
 
 	return
-}
-
-func (st *FileStorage) IsUserExists(userID User) bool {
-	return st.UserIDs[userID]
 }
 
 func (st *FileStorage) Pool() bool {

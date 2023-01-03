@@ -26,7 +26,11 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	links := h.st.GetUserLinks(user)
+	links, err := h.st.GetUserLinks(user)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
 
 	if len(links) == 0 {
 		http.Error(w, "[]", http.StatusNoContent)

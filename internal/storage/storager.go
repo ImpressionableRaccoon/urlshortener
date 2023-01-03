@@ -10,8 +10,7 @@ import (
 type Storager interface {
 	Add(url repositories.URL, userID repositories.User) (repositories.ID, error)
 	Get(id repositories.ID) (repositories.URL, error)
-	GetUserLinks(user repositories.User) []repositories.UserLink
-	IsUserExists(userID repositories.User) bool
+	GetUserLinks(user repositories.User) ([]repositories.UserLink, error)
 	Pool() bool
 }
 
