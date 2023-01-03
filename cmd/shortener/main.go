@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -21,8 +19,6 @@ func main() {
 
 	h := handlers.NewHandler(s)
 	r := routers.NewRouter(h)
-
-	repositories.ConnectPSQL()
 
 	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
 }

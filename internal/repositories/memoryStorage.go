@@ -65,3 +65,7 @@ func (st *MemStorage) GetUserLinks(user User) (data []UserLink) {
 func (st *MemStorage) IsUserExists(userID User) bool {
 	return st.UserIDs[userID]
 }
+
+func (st *MemStorage) Pool() bool {
+	return true
+}

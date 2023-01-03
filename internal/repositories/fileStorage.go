@@ -45,7 +45,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 
 		userID, err := uuid.Parse(splitted[2])
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		st.IDLinkDataDictionary[id] = LinkData{
@@ -111,6 +111,10 @@ func (st *FileStorage) GetUserLinks(user User) (data []UserLink) {
 
 func (st *FileStorage) IsUserExists(userID User) bool {
 	return st.UserIDs[userID]
+}
+
+func (st *FileStorage) Pool() bool {
+	return true
 }
 
 func (st *FileStorage) Close() error {
