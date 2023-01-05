@@ -49,7 +49,6 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 	responseData := make([]batchResponse, 0, len(requestData))
 
-	// TODO: можно сделать одну транзакцию
 	for _, link := range requestData {
 		response := batchResponse{
 			CorrelationID: link.CorrelationID,

@@ -5,14 +5,14 @@ import (
 	"time"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
-
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 )
 
 type PsqlStorage struct {
-	DB *pgxpool.Pool
+	db *pgxpool.Pool
 }
 
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
@@ -32,7 +32,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	}
 
 	st := &PsqlStorage{
-		DB: db,
+		db: db,
 	}
 
 	exists, err := st.checkIsTablesExists()
@@ -54,7 +54,7 @@ func (st *PsqlStorage) checkIsTablesExists() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	row := st.DB.QueryRow(ctx,
+	row := st.db.QueryRow(ctx,
 		`SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'links')`)
 
 	var result bool
@@ -71,7 +71,7 @@ func (st *PsqlStorage) createTables() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	_, err := st.DB.Exec(ctx,
+	_, err := st.db.Exec(ctx,
 		`CREATE TABLE links (
 			id varchar(255) NOT NULL UNIQUE,
 			url varchar(255) NOT NULL,
@@ -80,17 +80,28 @@ func (st *PsqlStorage) createTables() error {
 }
 
 func (st *PsqlStorage) Add(url URL, userID User) (id ID, err error) {
-	for e := *new(error); e == nil; _, e = st.Get(id) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	var res pgconn.CommandTag
+
+	for {
 		id, err = utils.GetRandomID()
 		if err != nil {
 			return "", err
 		}
+
+		res, err = st.db.Exec(ctx,
+			"INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+			id, url, userID)
+		if err != nil {
+			return "", err
+		}
+
+		if res.RowsAffected() == 1 {
+			break
+		}
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	_, err = st.DB.Exec(ctx, "INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3);", id, url, userID)
 
 	return id, err
 }
@@ -101,7 +112,7 @@ func (st *PsqlStorage) Get(id ID) (string, error) {
 
 	var url URL
 
-	row := st.DB.QueryRow(ctx, `SELECT url FROM links WHERE id = $1`, id)
+	row := st.db.QueryRow(ctx, `SELECT url FROM links WHERE id = $1`, id)
 	err := row.Scan(&url)
 	return url, err
 }
@@ -112,7 +123,7 @@ func (st *PsqlStorage) GetUserLinks(user User) (data []UserLink, err error) {
 
 	data = make([]UserLink, 0)
 
-	rows, err := st.DB.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1`, user)
+	rows, err := st.db.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1`, user)
 	if err != nil {
 		return nil, err
 	}
@@ -130,5 +141,5 @@ func (st *PsqlStorage) GetUserLinks(user User) (data []UserLink, err error) {
 }
 
 func (st *PsqlStorage) Pool() bool {
-	return st.DB.Ping(context.Background()) == nil
+	return st.db.Ping(context.Background()) == nil
 }
