@@ -14,35 +14,49 @@ type Storager interface {
 	Pool() bool
 }
 
+type StoragerType int
+
+const (
+	MemoryStorage StoragerType = 1 << iota
+	FileStorage
+	PsqlStorage
+)
+
 func NewStorager() (Storager, error) {
+	configs.Load()
+
 	var s Storager
 	var err error
 
-	configs.Load()
-
-	if dsn := configs.DatabaseDSN; dsn != "" {
-		s, err = repositories.NewPsqlStorage(dsn)
+	switch getStoragerType() {
+	case PsqlStorage:
+		s, err = repositories.NewPsqlStorage(configs.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}
-	} else if path := configs.FileStoragePath; path != "" {
+	case FileStorage:
 		var file *os.File
-
-		file, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0777)
-		if err != nil {
+		if file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777); err != nil {
 			return nil, err
 		}
-
-		s, err = repositories.NewFileStorage(file)
-		if err != nil {
+		if s, err = repositories.NewFileStorage(file); err != nil {
 			return nil, err
 		}
-	} else {
-		s, err = repositories.NewMemoryStorage()
-		if err != nil {
+	default:
+		if s, err = repositories.NewMemoryStorage(); err != nil {
 			return nil, err
 		}
 	}
 
 	return s, nil
+}
+
+func getStoragerType() StoragerType {
+	if dsn := configs.DatabaseDSN; dsn != "" {
+		return PsqlStorage
+	} else if path := configs.FileStoragePath; path != "" {
+		return FileStorage
+	} else {
+		return MemoryStorage
+	}
 }
