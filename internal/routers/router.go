@@ -25,7 +25,10 @@ func NewRouter(handler *handlers.Handler) chi.Router {
 		r.Get("/ping", handler.PingDB)
 
 		r.Route("/api", func(r chi.Router) {
-			r.Post("/shorten", handler.ShortenURL)
+			r.Route("/shorten", func(r chi.Router) {
+				r.Post("/", handler.ShortenURL)
+				r.Post("/batch", handler.ShortenBatch)
+			})
 
 			r.Route("/user", func(r chi.Router) {
 				r.Get("/urls", handler.UserURLs)

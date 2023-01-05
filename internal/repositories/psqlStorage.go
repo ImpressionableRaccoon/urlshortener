@@ -71,7 +71,11 @@ func (st *PsqlStorage) createTables() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	_, err := st.DB.Exec(ctx, "CREATE TABLE links (id varchar(255) NOT NULL UNIQUE, url varchar(255) NOT NULL, user_id uuid NOT NULL)")
+	_, err := st.DB.Exec(ctx,
+		`CREATE TABLE links (
+			id varchar(255) NOT NULL UNIQUE,
+			url varchar(255) NOT NULL,
+			user_id uuid NOT NULL)`)
 	return err
 }
 
