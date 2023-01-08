@@ -2,7 +2,11 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"time"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/golang-migrate/migrate/v4"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 	"github.com/jackc/pgx/v5"
@@ -16,6 +20,8 @@ type PsqlStorage struct {
 }
 
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
+	st := &PsqlStorage{}
+
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
@@ -26,58 +32,35 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil
 	}
 
-	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	st.db, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	st := &PsqlStorage{
-		db: db,
-	}
-
-	exists, err := st.checkIsTablesExists()
+	err = st.createTables()
 	if err != nil {
 		return nil, err
-	}
-
-	if !exists {
-		err = st.createTables()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return st, nil
 }
 
-func (st *PsqlStorage) checkIsTablesExists() (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	row := st.db.QueryRow(ctx,
-		`SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'links')`)
-
-	var result bool
-
-	err := row.Scan(&result)
-	if err != nil {
-		return false, err
-	}
-
-	return result, nil
-}
-
 func (st *PsqlStorage) createTables() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	_, err := st.db.Exec(ctx,
-		`CREATE TABLE links (
-			id varchar(255) NOT NULL UNIQUE,
-			url varchar(255) NOT NULL,
-			user_id uuid NOT NULL)`)
-	return err
+	m, err := migrate.New("file://migrations/postgres", configs.DatabaseDSN)
+	if err != nil {
+		return err
+	}
+	err = m.Up()
+	if errors.Is(err, migrate.ErrNoChange) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
+// TODO: ctx from request r.Context()
 
 func (st *PsqlStorage) Add(url URL, userID User) (id ID, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

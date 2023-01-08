@@ -56,7 +56,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 		id, err := h.st.Add(link.OriginalURL, user)
 		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
+			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -67,7 +67,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 	responseJSON, err := json.Marshal(responseData)
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
