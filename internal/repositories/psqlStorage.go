@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
-	"github.com/golang-migrate/migrate/v4"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
