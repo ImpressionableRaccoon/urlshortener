@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"errors"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
@@ -18,7 +19,7 @@ func NewMemoryStorage() (*MemStorage, error) {
 	return st, nil
 }
 
-func (st *MemStorage) Add(url URL, userID User) (id ID, err error) {
+func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -34,7 +35,7 @@ func (st *MemStorage) Add(url URL, userID User) (id ID, err error) {
 	return id, nil
 }
 
-func (st *MemStorage) Get(id ID) (string, error) {
+func (st *MemStorage) Get(ctx context.Context, id ID) (string, error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
 		return data.URL, nil
@@ -43,7 +44,7 @@ func (st *MemStorage) Get(id ID) (string, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *MemStorage) GetUserLinks(user User) (data []UserLink, err error) {
+func (st *MemStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
 	data = make([]UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
@@ -60,6 +61,6 @@ func (st *MemStorage) GetUserLinks(user User) (data []UserLink, err error) {
 	return
 }
 
-func (st *MemStorage) Pool() bool {
+func (st *MemStorage) Pool(ctx context.Context) bool {
 	return true
 }

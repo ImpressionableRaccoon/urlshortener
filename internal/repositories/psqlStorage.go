@@ -63,8 +63,8 @@ func (st *PsqlStorage) createTables() error {
 
 // TODO: ctx from request r.Context()
 
-func (st *PsqlStorage) Add(url URL, userID User) (id ID, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	var res pgconn.CommandTag
@@ -90,8 +90,8 @@ func (st *PsqlStorage) Add(url URL, userID User) (id ID, err error) {
 	return id, err
 }
 
-func (st *PsqlStorage) Get(id ID) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (st *PsqlStorage) Get(ctx context.Context, id ID) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	var url URL
@@ -101,8 +101,8 @@ func (st *PsqlStorage) Get(id ID) (string, error) {
 	return url, err
 }
 
-func (st *PsqlStorage) GetUserLinks(user User) (data []UserLink, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (st *PsqlStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	data = make([]UserLink, 0)
@@ -124,6 +124,6 @@ func (st *PsqlStorage) GetUserLinks(user User) (data []UserLink, err error) {
 	return data, nil
 }
 
-func (st *PsqlStorage) Pool() bool {
-	return st.db.Ping(context.Background()) == nil
+func (st *PsqlStorage) Pool(ctx context.Context) bool {
+	return st.db.Ping(ctx) == nil
 }

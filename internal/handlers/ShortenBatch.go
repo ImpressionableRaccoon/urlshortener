@@ -54,7 +54,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 			CorrelationID: link.CorrelationID,
 		}
 
-		id, err := h.st.Add(link.OriginalURL, user)
+		id, err := h.st.Add(r.Context(), link.OriginalURL, user)
 		if err != nil {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return

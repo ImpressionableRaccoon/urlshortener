@@ -43,7 +43,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.st.Add(requestData.URL, user)
+	id, err := h.st.Add(r.Context(), requestData.URL, user)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

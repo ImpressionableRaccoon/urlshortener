@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,7 +55,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	testURL := "https://google.com"
-	testID, err := s.Add(testURL, uuid.New())
+	testID, err := s.Add(context.Background(), testURL, uuid.New())
 	if err != nil {
 		panic(err)
 	}

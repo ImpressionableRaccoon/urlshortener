@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"os"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -8,10 +9,10 @@ import (
 )
 
 type Storager interface {
-	Add(url repositories.URL, userID repositories.User) (repositories.ID, error)
-	Get(id repositories.ID) (repositories.URL, error)
-	GetUserLinks(user repositories.User) ([]repositories.UserLink, error)
-	Pool() bool
+	Add(ctx context.Context, url repositories.URL, userID repositories.User) (repositories.ID, error)
+	Get(ctx context.Context, id repositories.ID) (repositories.URL, error)
+	GetUserLinks(ctx context.Context, user repositories.User) ([]repositories.UserLink, error)
+	Pool(ctx context.Context) bool
 }
 
 type StoragerType int

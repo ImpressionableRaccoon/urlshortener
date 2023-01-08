@@ -26,7 +26,7 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	links, err := h.st.GetUserLinks(user)
+	links, err := h.st.GetUserLinks(r.Context(), user)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

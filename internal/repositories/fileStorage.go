@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -55,7 +56,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	return st, nil
 }
 
-func (st *FileStorage) Add(url URL, userID User) (id ID, err error) {
+func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -80,7 +81,7 @@ func (st *FileStorage) Add(url URL, userID User) (id ID, err error) {
 	return id, nil
 }
 
-func (st *FileStorage) Get(id ID) (URL, error) {
+func (st *FileStorage) Get(ctx context.Context, id ID) (URL, error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
 		return data.URL, nil
@@ -88,7 +89,7 @@ func (st *FileStorage) Get(id ID) (URL, error) {
 	return "", errors.New("URL not found")
 }
 
-func (st *FileStorage) GetUserLinks(user User) (data []UserLink, err error) {
+func (st *FileStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
 	data = make([]UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
@@ -105,7 +106,7 @@ func (st *FileStorage) GetUserLinks(user User) (data []UserLink, err error) {
 	return
 }
 
-func (st *FileStorage) Pool() bool {
+func (st *FileStorage) Pool(ctx context.Context) bool {
 	return true
 }
 

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -27,25 +28,25 @@ func TestFileStorage(t *testing.T) {
 	testUser := uuid.New()
 
 	t.Run("URL not found", func(t *testing.T) {
-		r, err := st.Get("test")
+		r, err := st.Get(context.Background(), "test")
 		require.NotNil(t, err)
 		assert.Equal(t, "", r)
 	})
 
 	t.Run("short link", func(t *testing.T) {
-		r, err := st.Add(url, testUser)
+		r, err := st.Add(context.Background(), url, testUser)
 		require.Nil(t, err)
 		id = r
 	})
 
 	t.Run("get test URL", func(t *testing.T) {
-		r, err := st.Get(id)
+		r, err := st.Get(context.Background(), id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
 	})
 
 	t.Run("get testURL from user URLs", func(t *testing.T) {
-		r, err := st.GetUserLinks(testUser)
+		r, err := st.GetUserLinks(context.Background(), testUser)
 		require.Nil(t, err)
 		assert.Contains(t, r, UserLink{
 			ID:  id,
@@ -65,7 +66,7 @@ func TestFileStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("get test URL after restart", func(t *testing.T) {
-		r, err := st.Get(id)
+		r, err := st.Get(context.Background(), id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
 	})
