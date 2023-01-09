@@ -3,7 +3,6 @@ package repositories
 import (
 	"bufio"
 	"context"
-	"errors"
 	"io"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 type FileStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
+	existingURLs         map[URL]ID
 	file                 *os.File
 	writer               *bufio.Writer
 }
@@ -22,6 +22,7 @@ type FileStorage struct {
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
+		existingURLs:         make(map[URL]ID),
 		file:                 file,
 		writer:               bufio.NewWriter(file),
 	}
@@ -51,12 +52,18 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 			URL:  url,
 			User: userID,
 		}
+		st.existingURLs[url] = id
 	}
 
 	return st, nil
 }
 
 func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
+	value, ok := st.existingURLs[url]
+	if ok {
+		return value, URLAlreadyExists
+	}
+
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -68,6 +75,7 @@ func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 		URL:  url,
 		User: userID,
 	}
+	st.existingURLs[url] = id
 
 	data := []byte(id + "," + url + "," + userID.String() + "\n")
 	if _, err = st.writer.Write(data); err != nil {
@@ -86,7 +94,7 @@ func (st *FileStorage) Get(ctx context.Context, id ID) (URL, error) {
 	if ok {
 		return data.URL, nil
 	}
-	return "", errors.New("URL not found")
+	return "", URLNotFound
 }
 
 func (st *FileStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {

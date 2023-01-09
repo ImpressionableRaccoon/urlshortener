@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
 
@@ -28,7 +31,9 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.st.Add(r.Context(), string(b), user)
-	if err != nil {
+	if errors.Is(err, repositories.URLAlreadyExists) {
+		w.WriteHeader(http.StatusConflict)
+	} else if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}

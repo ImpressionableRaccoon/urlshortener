@@ -2,24 +2,30 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type MemStorage struct {
 	IDLinkDataDictionary map[ID]LinkData
+	existingURLs         map[URL]ID
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[ID]LinkData),
+		existingURLs:         make(map[URL]ID),
 	}
 
 	return st, nil
 }
 
 func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
+	value, ok := st.existingURLs[url]
+	if ok {
+		return value, URLAlreadyExists
+	}
+
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
 		id, err = utils.GetRandomID()
 		if err != nil {
@@ -31,6 +37,7 @@ func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err
 		URL:  url,
 		User: userID,
 	}
+	st.existingURLs[url] = id
 
 	return id, nil
 }
@@ -41,7 +48,7 @@ func (st *MemStorage) Get(ctx context.Context, id ID) (string, error) {
 		return data.URL, nil
 	}
 
-	return "", errors.New("URL not found")
+	return "", URLNotFound
 }
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {

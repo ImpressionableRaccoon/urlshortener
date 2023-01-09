@@ -3,7 +3,10 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/jackc/pgerrcode"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
@@ -71,9 +74,20 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 		}
 
 		res, err = st.db.Exec(ctx,
-			"INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+			"INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
 			id, url, userID)
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
+			row := st.db.QueryRow(ctx, `SELECT id FROM links WHERE url = $1`, url)
+			err = row.Scan(&id)
+			if err != nil {
+				return "", err
+			}
+			return id, URLAlreadyExists
+		}
 		if err != nil {
+			fmt.Println(err)
 			return "", err
 		}
 

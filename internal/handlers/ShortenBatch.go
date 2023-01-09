@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -55,7 +56,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id, err := h.st.Add(r.Context(), link.OriginalURL, user)
-		if err != nil {
+		if !errors.Is(err, repositories.URLAlreadyExists) && err != nil {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
