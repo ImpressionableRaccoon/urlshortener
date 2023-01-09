@@ -123,7 +123,7 @@ func TestRouter(t *testing.T) {
 		reader := strings.NewReader(string(requestJSON))
 
 		statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/api/shorten", reader)
-		assert.Equal(t, http.StatusCreated, statusCode)
+		assert.Equal(t, http.StatusConflict, statusCode)
 
 		var response handlers.ShortenURLResponse
 		err = json.Unmarshal(body, &response)
