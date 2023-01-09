@@ -1,8 +1,10 @@
 package repositories
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
-	URLNotFound      error = errors.New("URL not found")
-	URLAlreadyExists error = errors.New("URL already exists")
+	ErrURLNotFound      error = errors.New("URL not found")
+	ErrURLAlreadyExists error = errors.New("URL already exists")
 )

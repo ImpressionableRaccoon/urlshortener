@@ -47,7 +47,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.st.Add(r.Context(), requestData.URL, user)
-	if errors.Is(err, repositories.URLAlreadyExists) {
+	if errors.Is(err, repositories.ErrURLAlreadyExists) {
 		w.WriteHeader(http.StatusConflict)
 	} else if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)

@@ -61,7 +61,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
 	value, ok := st.existingURLs[url]
 	if ok {
-		return value, URLAlreadyExists
+		return value, ErrURLAlreadyExists
 	}
 
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
@@ -94,7 +94,7 @@ func (st *FileStorage) Get(ctx context.Context, id ID) (URL, error) {
 	if ok {
 		return data.URL, nil
 	}
-	return "", URLNotFound
+	return "", ErrURLNotFound
 }
 
 func (st *FileStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {

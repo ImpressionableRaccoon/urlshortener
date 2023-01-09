@@ -56,7 +56,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id, err := h.st.Add(r.Context(), link.OriginalURL, user)
-		if !errors.Is(err, repositories.URLAlreadyExists) && err != nil {
+		if !errors.Is(err, repositories.ErrURLAlreadyExists) && err != nil {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}

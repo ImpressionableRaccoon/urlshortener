@@ -84,7 +84,7 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 			if err != nil {
 				return "", err
 			}
-			return id, URLAlreadyExists
+			return id, ErrURLAlreadyExists
 		}
 		if err != nil {
 			fmt.Println(err)

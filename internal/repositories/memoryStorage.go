@@ -23,7 +23,7 @@ func NewMemoryStorage() (*MemStorage, error) {
 func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
 	value, ok := st.existingURLs[url]
 	if ok {
-		return value, URLAlreadyExists
+		return value, ErrURLAlreadyExists
 	}
 
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
@@ -48,7 +48,7 @@ func (st *MemStorage) Get(ctx context.Context, id ID) (string, error) {
 		return data.URL, nil
 	}
 
-	return "", URLNotFound
+	return "", ErrURLNotFound
 }
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
