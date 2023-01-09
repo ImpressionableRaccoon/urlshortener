@@ -46,6 +46,8 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "application/json")
+
 	id, err := h.st.Add(r.Context(), requestData.URL, user)
 	if errors.Is(err, repositories.ErrURLAlreadyExists) {
 		w.WriteHeader(http.StatusConflict)
@@ -66,7 +68,6 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(responseJSON)
 	if err != nil {
