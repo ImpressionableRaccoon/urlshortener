@@ -38,7 +38,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil, err
 	}
 
-	err = st.createTables()
+	err = st.doMigrate()
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	return st, nil
 }
 
-func (st *PsqlStorage) createTables() error {
+func (st *PsqlStorage) doMigrate() error {
 	m, err := migrate.New("file://migrations/postgres", configs.DatabaseDSN)
 	if err != nil {
 		return err
@@ -55,13 +55,8 @@ func (st *PsqlStorage) createTables() error {
 	if errors.Is(err, migrate.ErrNoChange) {
 		return nil
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
-
-// TODO: ctx from request r.Context()
 
 func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
