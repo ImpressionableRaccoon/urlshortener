@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgerrcode"
@@ -78,7 +77,7 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 			id, url, userID)
 
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			row := st.db.QueryRow(ctx, `SELECT id FROM links WHERE url = $1`, url)
 			err = row.Scan(&id)
 			if err != nil {
@@ -87,7 +86,6 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 			return id, ErrURLAlreadyExists
 		}
 		if err != nil {
-			fmt.Println(err)
 			return "", err
 		}
 
