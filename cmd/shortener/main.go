@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	s, err := storage.NewStorager()
 	if err != nil {
 		panic(err)

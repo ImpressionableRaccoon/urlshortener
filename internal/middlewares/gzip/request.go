@@ -19,11 +19,10 @@ func Request(next http.Handler) http.Handler {
 			defer func(gz *gzip.Reader) {
 				err = gz.Close()
 				if err != nil {
-					log.Printf("GzipRequest gz.Close() failed: %v", err)
+					log.Printf("close failed: %v", err)
 				}
 			}(gz)
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }

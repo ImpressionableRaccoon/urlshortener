@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -35,6 +36,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 			break
 		}
 		if err != nil {
+			log.Printf("unable to read bytes: %v", err)
 			return nil, err
 		}
 		line := strings.Trim(string(bytes), "\n")
@@ -45,6 +47,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 
 		userID, err := uuid.Parse(splitted[2])
 		if err != nil {
+			log.Printf("unable to parse user: %v", err)
 			return nil, err
 		}
 
@@ -65,8 +68,9 @@ func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 	}
 
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
-		id, err = utils.GetRandomID()
+		id, err = utils.GenRandomID()
 		if err != nil {
+			log.Printf("generate id failed: %v", err)
 			return "", err
 		}
 	}
@@ -79,10 +83,12 @@ func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 
 	data := []byte(id + "," + url + "," + userID.String() + "\n")
 	if _, err = st.writer.Write(data); err != nil {
+		log.Printf("write failed: %v", err)
 		return "", err
 	}
 	err = st.writer.Flush()
 	if err != nil {
+		log.Printf("flush failed: %v", err)
 		return "", err
 	}
 
@@ -111,7 +117,7 @@ func (st *FileStorage) GetUserLinks(ctx context.Context, user User) (data []User
 		})
 	}
 
-	return
+	return data, err
 }
 
 func (st *FileStorage) Pool(ctx context.Context) bool {

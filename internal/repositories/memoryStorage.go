@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"log"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
@@ -27,8 +28,9 @@ func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err
 	}
 
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
-		id, err = utils.GetRandomID()
+		id, err = utils.GenRandomID()
 		if err != nil {
+			log.Printf("generate id failed: %v", err)
 			return "", err
 		}
 	}
@@ -42,7 +44,7 @@ func (st *MemStorage) Add(ctx context.Context, url URL, userID User) (id ID, err
 	return id, nil
 }
 
-func (st *MemStorage) Get(ctx context.Context, id ID) (string, error) {
+func (st *MemStorage) Get(ctx context.Context, id ID) (URL, error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
 		return data.URL, nil

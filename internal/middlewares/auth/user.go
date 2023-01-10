@@ -19,30 +19,13 @@ func UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("USER")
 		if err == http.ErrNoCookie || len(cookie.Value) < 16 {
-			user, err := setNewUser(w)
-			if err != nil {
-				http.Error(w, "Server error", http.StatusInternalServerError)
-				return
-			}
-			ctx := context.WithValue(r.Context(), UserKey{}, user)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			setNewUser(next, w, r, createNewUser(w))
 			return
 		}
 
 		payload, err := base64.StdEncoding.DecodeString(cookie.Value)
-		if err != nil {
-			http.Error(w, "Server error", http.StatusInternalServerError)
-			return
-		}
-
-		if len(payload) < 16 {
-			user, err := setNewUser(w)
-			if err != nil {
-				http.Error(w, "Server error", http.StatusInternalServerError)
-				return
-			}
-			ctx := context.WithValue(r.Context(), UserKey{}, user)
-			next.ServeHTTP(w, r.WithContext(ctx))
+		if err != nil || len(payload) < 16 {
+			setNewUser(next, w, r, createNewUser(w))
 			return
 		}
 
@@ -51,13 +34,7 @@ func UserCookie(next http.Handler) http.Handler {
 		sign := h.Sum(nil)
 
 		if !hmac.Equal(sign, payload[16:]) {
-			user, err := setNewUser(w)
-			if err != nil {
-				http.Error(w, "Server error", http.StatusInternalServerError)
-				return
-			}
-			ctx := context.WithValue(r.Context(), UserKey{}, user)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			setNewUser(next, w, r, createNewUser(w))
 			return
 		}
 
@@ -66,35 +43,31 @@ func UserCookie(next http.Handler) http.Handler {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
-
-		ctx := context.WithValue(r.Context(), UserKey{}, user.String())
-		next.ServeHTTP(w, r.WithContext(ctx))
+		setNewUser(next, w, r, user.String())
 	})
 }
 
-func setNewUser(w http.ResponseWriter) (string, error) {
+func setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
+	ctx := context.WithValue(r.Context(), UserKey{}, user)
+	next.ServeHTTP(w, r.WithContext(ctx))
+}
+
+func createNewUser(w http.ResponseWriter) string {
 	user := uuid.New()
 
-	b, err := user.MarshalBinary()
-	if err != nil {
-		return "", err
-	}
+	b, _ := user.MarshalBinary()
 
 	h := hmac.New(sha256.New, configs.CookieKey)
 	h.Write(b)
 	sign := h.Sum(nil)
 
-	content := append(b, sign...)
-
-	encoded := base64.StdEncoding.EncodeToString(content)
-
 	cookie := http.Cookie{
 		Name:    "USER",
-		Value:   encoded,
+		Value:   base64.StdEncoding.EncodeToString(append(b, sign...)),
 		Expires: time.Now().Add(365 * 24 * time.Hour),
 	}
 
 	http.SetCookie(w, &cookie)
 
-	return user.String(), nil
+	return user.String()
 }

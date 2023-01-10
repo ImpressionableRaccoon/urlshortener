@@ -26,13 +26,15 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	value := r.Context().Value(auth.UserKey{}).(string)
 	user, err := uuid.Parse(value)
 	if err != nil {
+		log.Printf("unable to parse user uuid: %v", err)
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
+	var conflict bool
 	id, err := h.st.Add(r.Context(), string(b), user)
 	if errors.Is(err, repositories.ErrURLAlreadyExists) {
-		w.WriteHeader(http.StatusConflict)
+		conflict = true
 	} else if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -40,9 +42,15 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 
 	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, id)
 
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("content-type", "text/plain; charset=UTF-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	if conflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	_, err = w.Write([]byte(url))
 	if err != nil {
-		log.Printf("CreateShortURL write failed: %v", err)
+		log.Printf("write failed: %v", err)
 	}
 }

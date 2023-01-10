@@ -15,7 +15,7 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 
 	url, err := h.st.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
 

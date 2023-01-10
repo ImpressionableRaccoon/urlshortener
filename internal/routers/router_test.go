@@ -79,7 +79,7 @@ func TestRouter(t *testing.T) {
 
 	t.Run("get URL by wrong ID", func(t *testing.T) {
 		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, "/test123", nil)
-		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Equal(t, http.StatusNotFound, statusCode)
 	})
 
 	t.Run("try to get short link for empty URL", func(t *testing.T) {

@@ -22,39 +22,40 @@ type UserLink struct {
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
 	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		log.Printf("unable to parse user uuid: %v", err)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
 	links, err := h.st.GetUserLinks(r.Context(), user)
 	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
-	if len(links) == 0 {
-		http.Error(w, "[]", http.StatusNoContent)
-		return
-	}
-
-	linkURLs := make([]UserLink, 0)
-
+	response := make([]UserLink, 0)
 	for _, link := range links {
-		linkURLs = append(linkURLs, UserLink{
+		response = append(response, UserLink{
 			ShortURL:    fmt.Sprintf("%s/%s", configs.ServerBaseURL, link.ID),
 			OriginalURL: link.URL,
 		})
 	}
 
-	m, err := json.Marshal(linkURLs)
+	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		log.Printf("unable to marshal response: %v", err)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
-	_, err = w.Write(m)
-	if err != nil {
-		log.Printf("ShortenURL write failed: %v", err)
+	if len(response) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		w.Header().Set("content-type", "application/json")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		_, err = w.Write(responseJSON)
+		if err != nil {
+			log.Printf("write failed: %v", err)
+		}
 	}
 }

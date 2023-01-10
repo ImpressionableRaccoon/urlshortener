@@ -12,7 +12,7 @@ const (
 	idLength          = 5
 )
 
-func GetRandomID() (string, error) {
+func GenRandomID() (string, error) {
 	allowedCharactersLength := big.NewInt(int64(len(allowedCharacters)))
 	var b strings.Builder
 	for i := 0; i < idLength; i++ {

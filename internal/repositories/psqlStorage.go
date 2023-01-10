@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/jackc/pgerrcode"
@@ -67,8 +68,9 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 	var res pgconn.CommandTag
 
 	for {
-		id, err = utils.GetRandomID()
+		id, err = utils.GenRandomID()
 		if err != nil {
+			log.Printf("generate id failed: %v", err)
 			return "", err
 		}
 
@@ -81,11 +83,13 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 			row := st.db.QueryRow(ctx, `SELECT id FROM links WHERE url = $1`, url)
 			err = row.Scan(&id)
 			if err != nil {
+				log.Printf("query failed: %v", err)
 				return "", err
 			}
 			return id, ErrURLAlreadyExists
 		}
 		if err != nil {
+			log.Printf("exec failed: %v", err)
 			return "", err
 		}
 
@@ -102,9 +106,12 @@ func (st *PsqlStorage) Get(ctx context.Context, id ID) (string, error) {
 	defer cancel()
 
 	var url URL
-
 	row := st.db.QueryRow(ctx, `SELECT url FROM links WHERE id = $1`, id)
 	err := row.Scan(&url)
+	if err != nil {
+		log.Printf("query failed: %v", err)
+	}
+
 	return url, err
 }
 
@@ -112,17 +119,19 @@ func (st *PsqlStorage) GetUserLinks(ctx context.Context, user User) (data []User
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	data = make([]UserLink, 0)
-
 	rows, err := st.db.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1`, user)
 	if err != nil {
+		log.Printf("query failed: %v", err)
 		return nil, err
 	}
+
+	data = make([]UserLink, 0)
 
 	for rows.Next() {
 		link := UserLink{}
 		err = rows.Scan(&link.ID, &link.URL)
 		if err != nil {
+			log.Printf("row scan failed: %v", err)
 			return nil, err
 		}
 		data = append(data, link)

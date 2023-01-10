@@ -17,12 +17,12 @@ import (
 
 type correlationID = string
 
-type batchRequest struct {
+type BatchRequest struct {
 	CorrelationID correlationID    `json:"correlation_id"`
 	OriginalURL   repositories.URL `json:"original_url"`
 }
 
-type batchResponse struct {
+type BatchResponse struct {
 	CorrelationID correlationID    `json:"correlation_id"`
 	ShortURL      repositories.URL `json:"short_url"`
 }
@@ -30,52 +30,51 @@ type batchResponse struct {
 func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil || len(b) == 0 {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		h.httpJSONError(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	requestData := make([]BatchRequest, 0)
+	err = json.Unmarshal(b, &requestData)
+	if err != nil {
+		h.httpJSONError(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
 	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		log.Printf("unable to parse user uuid: %v", err)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
-	requestData := make([]batchRequest, 0)
-
-	err = json.Unmarshal(b, &requestData)
-	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-
-	responseData := make([]batchResponse, 0, len(requestData))
-
+	response := make([]BatchResponse, 0, len(requestData))
+	var id repositories.ID
 	for _, link := range requestData {
-		response := batchResponse{
-			CorrelationID: link.CorrelationID,
-		}
-
-		id, err := h.st.Add(r.Context(), link.OriginalURL, user)
+		id, err = h.st.Add(r.Context(), link.OriginalURL, user)
 		if !errors.Is(err, repositories.ErrURLAlreadyExists) && err != nil {
-			http.Error(w, "Server error", http.StatusInternalServerError)
+			h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 			return
 		}
 
-		response.ShortURL = fmt.Sprintf("%s/%s", configs.ServerBaseURL, id)
-
-		responseData = append(responseData, response)
+		response = append(response, BatchResponse{
+			CorrelationID: link.CorrelationID,
+			ShortURL:      fmt.Sprintf("%s/%s", configs.ServerBaseURL, id),
+		})
 	}
 
-	responseJSON, err := json.Marshal(responseData)
+	responseJSON, err := json.Marshal(&response)
 	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		log.Printf("unable to marshal response: %v", err)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("content-type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(responseJSON)
 	if err != nil {
-		log.Printf("ShortenURL write failed: %v", err)
+		log.Printf("write failed: %v", err)
 	}
 }
