@@ -6,17 +6,17 @@ import (
 	"log"
 	"time"
 
-	"github.com/jackc/pgerrcode"
-
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type PsqlStorage struct {

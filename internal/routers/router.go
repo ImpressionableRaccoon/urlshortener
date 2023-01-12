@@ -1,11 +1,12 @@
 package routers
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/gzip"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 func NewRouter(handler *handlers.Handler) chi.Router {

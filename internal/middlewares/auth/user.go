@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+	"github.com/google/uuid"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
-	"github.com/google/uuid"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 func UserCookie(next http.Handler) http.Handler {

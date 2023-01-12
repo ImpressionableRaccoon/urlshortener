@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+	"github.com/google/uuid"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-	"github.com/google/uuid"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type UserLink struct {

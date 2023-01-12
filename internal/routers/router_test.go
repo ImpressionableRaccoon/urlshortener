@@ -12,13 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, jar http.CookieJar, method, path string, body io.Reader) (int, []byte, http.Header) {
