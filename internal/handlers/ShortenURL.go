@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/google/uuid"
@@ -35,7 +37,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uuid.Parse(r.Context().Value("userID").(string))
+	user, err := uuid.Parse(r.Context().Value(utils.MyKey("userID")).(string))
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/google/uuid"
 )
@@ -45,7 +47,7 @@ func UserCookie(next http.Handler) http.Handler {
 }
 
 func setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
-	ctx := context.WithValue(r.Context(), "userID", user)
+	ctx := context.WithValue(r.Context(), utils.MyKey("userID"), user)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
