@@ -7,13 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-
-	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
-
-	"github.com/google/uuid"
-
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
+	"github.com/google/uuid"
 )
 
 func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +19,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := r.Context().Value(auth.UserKey{}).(string)
+	value := r.Context().Value("userID").(string)
 	user, err := uuid.Parse(value)
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)

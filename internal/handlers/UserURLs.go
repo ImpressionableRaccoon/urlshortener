@@ -6,11 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
-
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-
 	"github.com/google/uuid"
 )
 
@@ -20,7 +17,7 @@ type UserLink struct {
 }
 
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
-	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
+	user, err := uuid.Parse(r.Context().Value("userID").(string))
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

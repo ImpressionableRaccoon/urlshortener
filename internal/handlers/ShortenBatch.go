@@ -9,10 +9,8 @@ import (
 	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares/auth"
-	"github.com/google/uuid"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
+	"github.com/google/uuid"
 )
 
 type correlationID = string
@@ -41,7 +39,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uuid.Parse(r.Context().Value(auth.UserKey{}).(string))
+	user, err := uuid.Parse(r.Context().Value("userID").(string))
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

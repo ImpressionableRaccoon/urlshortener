@@ -9,11 +9,8 @@ import (
 	"time"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
-
 	"github.com/google/uuid"
 )
-
-type UserKey struct{}
 
 func UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +45,7 @@ func UserCookie(next http.Handler) http.Handler {
 }
 
 func setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
-	ctx := context.WithValue(r.Context(), UserKey{}, user)
+	ctx := context.WithValue(r.Context(), "userID", user)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
