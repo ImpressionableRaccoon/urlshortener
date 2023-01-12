@@ -21,7 +21,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := r.Context().Value(utils.MyKey("userID")).(string)
+	value := r.Context().Value(utils.ContextKey("userID")).(string)
 	user, err := uuid.Parse(value)
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)

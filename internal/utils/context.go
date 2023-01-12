@@ -1,3 +1,3 @@
 package utils
 
-type MyKey string
+type ContextKey string

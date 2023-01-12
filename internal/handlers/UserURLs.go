@@ -19,7 +19,7 @@ type UserLink struct {
 }
 
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
-	user, err := uuid.Parse(r.Context().Value(utils.MyKey("userID")).(string))
+	user, err := uuid.Parse(r.Context().Value(utils.ContextKey("userID")).(string))
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

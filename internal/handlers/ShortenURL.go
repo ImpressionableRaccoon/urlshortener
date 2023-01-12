@@ -37,7 +37,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uuid.Parse(r.Context().Value(utils.MyKey("userID")).(string))
+	user, err := uuid.Parse(r.Context().Value(utils.ContextKey("userID")).(string))
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

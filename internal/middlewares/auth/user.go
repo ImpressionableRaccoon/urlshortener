@@ -47,7 +47,7 @@ func UserCookie(next http.Handler) http.Handler {
 }
 
 func setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
-	ctx := context.WithValue(r.Context(), utils.MyKey("userID"), user)
+	ctx := context.WithValue(r.Context(), utils.ContextKey("userID"), user)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
