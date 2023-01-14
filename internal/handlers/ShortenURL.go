@@ -24,6 +24,9 @@ type ShortenURLResponse struct {
 }
 
 func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+
 	b, err := io.ReadAll(r.Body)
 	if err != nil || len(b) == 0 {
 		h.httpJSONError(w, "Bad request", http.StatusBadRequest)
@@ -44,10 +47,9 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var conflict bool
 	id, err := h.st.Add(r.Context(), requestData.URL, user)
 	if errors.Is(err, repositories.ErrURLAlreadyExists) {
-		conflict = true
+		w.WriteHeader(http.StatusConflict)
 	} else if err != nil {
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
@@ -64,13 +66,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	if conflict {
-		w.WriteHeader(http.StatusConflict)
-	} else {
-		w.WriteHeader(http.StatusCreated)
-	}
+	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(responseJSON)
 	if err != nil {
 		log.Printf("write failed: %v", err)
