@@ -1,4 +1,4 @@
-package repositories
+package memory
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
 func TestMemoryStorage(t *testing.T) {
@@ -38,7 +40,7 @@ func TestMemoryStorage(t *testing.T) {
 	t.Run("get testURL from user URLs", func(t *testing.T) {
 		r, err := st.GetUserLinks(context.Background(), testUser)
 		require.Nil(t, err)
-		assert.Contains(t, r, UserLink{
+		assert.Contains(t, r, repositories.UserLink{
 			ID:  id,
 			URL: url,
 		})

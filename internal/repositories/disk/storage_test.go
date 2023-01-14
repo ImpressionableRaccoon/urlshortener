@@ -1,4 +1,4 @@
-package repositories
+package disk
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
 func TestFileStorage(t *testing.T) {
@@ -47,7 +49,7 @@ func TestFileStorage(t *testing.T) {
 	t.Run("get testURL from user URLs", func(t *testing.T) {
 		r, err := st.GetUserLinks(context.Background(), testUser)
 		require.Nil(t, err)
-		assert.Contains(t, r, UserLink{
+		assert.Contains(t, r, repositories.UserLink{
 			ID:  id,
 			URL: url,
 		})
@@ -76,7 +78,7 @@ func TestFileStorage(t *testing.T) {
 	err = os.Remove(filename)
 	require.Nil(t, err)
 
-	t.Run("empty file storage", func(t *testing.T) {
+	t.Run("empty disk storage", func(t *testing.T) {
 		st, err := NewFileStorage(nil)
 		assert.NotNil(t, err)
 		assert.Nil(t, st)

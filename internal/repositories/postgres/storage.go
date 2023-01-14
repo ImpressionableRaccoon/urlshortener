@@ -1,4 +1,4 @@
-package repositories
+package postgres
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
@@ -50,7 +51,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 }
 
 func (st *PsqlStorage) doMigrate() error {
-	m, err := migrate.New("file://migrations/postgres", configs.DatabaseDSN)
+	m, err := migrate.New("disk://migrations/postgres", configs.DatabaseDSN)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func (st *PsqlStorage) doMigrate() error {
 	return err
 }
 
-func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
+func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -86,7 +87,7 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 				log.Printf("query failed: %v", err)
 				return "", err
 			}
-			return id, ErrURLAlreadyExists
+			return id, repositories.ErrURLAlreadyExists
 		}
 		if err != nil {
 			log.Printf("exec failed: %v", err)
@@ -101,11 +102,11 @@ func (st *PsqlStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 	return id, err
 }
 
-func (st *PsqlStorage) Get(ctx context.Context, id ID) (string, error) {
+func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	var url URL
+	var url repositories.URL
 	row := st.db.QueryRow(ctx, `SELECT url FROM links WHERE id = $1`, id)
 	err := row.Scan(&url)
 	if err != nil {
@@ -115,7 +116,7 @@ func (st *PsqlStorage) Get(ctx context.Context, id ID) (string, error) {
 	return url, err
 }
 
-func (st *PsqlStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
+func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -125,10 +126,10 @@ func (st *PsqlStorage) GetUserLinks(ctx context.Context, user User) (data []User
 		return nil, err
 	}
 
-	data = make([]UserLink, 0)
+	data = make([]repositories.UserLink, 0)
 
 	for rows.Next() {
-		link := UserLink{}
+		link := repositories.UserLink{}
 		err = rows.Scan(&link.ID, &link.URL)
 		if err != nil {
 			log.Printf("row scan failed: %v", err)

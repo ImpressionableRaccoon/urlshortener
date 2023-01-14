@@ -6,6 +6,9 @@ import (
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/disk"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/postgres"
 )
 
 type Storager interface {
@@ -31,7 +34,7 @@ func NewStorager() (Storager, error) {
 
 	switch getStoragerType() {
 	case PsqlStorage:
-		s, err = repositories.NewPsqlStorage(configs.DatabaseDSN)
+		s, err = postgres.NewPsqlStorage(configs.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}
@@ -40,11 +43,11 @@ func NewStorager() (Storager, error) {
 		if file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777); err != nil {
 			return nil, err
 		}
-		if s, err = repositories.NewFileStorage(file); err != nil {
+		if s, err = disk.NewFileStorage(file); err != nil {
 			return nil, err
 		}
 	default:
-		if s, err = repositories.NewMemoryStorage(); err != nil {
+		if s, err = memory.NewMemoryStorage(); err != nil {
 			return nil, err
 		}
 	}

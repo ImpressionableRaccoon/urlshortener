@@ -1,4 +1,4 @@
-package repositories
+package disk
 
 import (
 	"bufio"
@@ -10,20 +10,21 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type FileStorage struct {
-	IDLinkDataDictionary map[ID]LinkData
-	existingURLs         map[URL]ID
+	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
+	existingURLs         map[repositories.URL]repositories.ID
 	file                 *os.File
 	writer               *bufio.Writer
 }
 
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
-		IDLinkDataDictionary: make(map[ID]LinkData),
-		existingURLs:         make(map[URL]ID),
+		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
+		existingURLs:         make(map[repositories.URL]repositories.ID),
 		file:                 file,
 		writer:               bufio.NewWriter(file),
 	}
@@ -51,7 +52,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 			return nil, err
 		}
 
-		st.IDLinkDataDictionary[id] = LinkData{
+		st.IDLinkDataDictionary[id] = repositories.LinkData{
 			URL:  url,
 			User: userID,
 		}
@@ -61,10 +62,10 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	return st, nil
 }
 
-func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, err error) {
+func (st *FileStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
 	value, ok := st.existingURLs[url]
 	if ok {
-		return value, ErrURLAlreadyExists
+		return value, repositories.ErrURLAlreadyExists
 	}
 
 	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
@@ -75,7 +76,7 @@ func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 		}
 	}
 
-	st.IDLinkDataDictionary[id] = LinkData{
+	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
 		User: userID,
 	}
@@ -95,23 +96,23 @@ func (st *FileStorage) Add(ctx context.Context, url URL, userID User) (id ID, er
 	return id, nil
 }
 
-func (st *FileStorage) Get(ctx context.Context, id ID) (URL, error) {
+func (st *FileStorage) Get(ctx context.Context, id repositories.ID) (repositories.URL, error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
 		return data.URL, nil
 	}
-	return "", ErrURLNotFound
+	return "", repositories.ErrURLNotFound
 }
 
-func (st *FileStorage) GetUserLinks(ctx context.Context, user User) (data []UserLink, err error) {
-	data = make([]UserLink, 0)
+func (st *FileStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+	data = make([]repositories.UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
 		if value.User != user {
 			continue
 		}
 
-		data = append(data, UserLink{
+		data = append(data, repositories.UserLink{
 			ID:  id,
 			URL: value.URL,
 		})

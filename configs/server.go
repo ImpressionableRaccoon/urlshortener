@@ -39,7 +39,7 @@ func loadEnv() {
 func loadArgs() {
 	flag.StringVar(&ServerAddress, "a", ServerAddress, "server address")
 	flag.StringVar(&ServerBaseURL, "b", ServerBaseURL, "server base url")
-	flag.StringVar(&FileStoragePath, "f", FileStoragePath, "file storage path")
+	flag.StringVar(&FileStoragePath, "f", FileStoragePath, "disk storage path")
 	flag.StringVar(&DatabaseDSN, "d", DatabaseDSN, "database data source name")
 
 	flag.Parse()
