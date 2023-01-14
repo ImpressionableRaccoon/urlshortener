@@ -51,7 +51,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 }
 
 func (st *PsqlStorage) doMigrate() error {
-	m, err := migrate.New("disk://migrations/postgres", configs.DatabaseDSN)
+	m, err := migrate.New("file://migrations/postgres", configs.DatabaseDSN)
 	if err != nil {
 		return err
 	}
