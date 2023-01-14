@@ -78,7 +78,7 @@ func TestFileStorage(t *testing.T) {
 	err = os.Remove(filename)
 	require.Nil(t, err)
 
-	t.Run("empty disk storage", func(t *testing.T) {
+	t.Run("empty file storage", func(t *testing.T) {
 		st, err := NewFileStorage(nil)
 		assert.NotNil(t, err)
 		assert.Nil(t, st)
