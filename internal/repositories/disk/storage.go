@@ -96,12 +96,12 @@ func (st *FileStorage) Add(ctx context.Context, url repositories.URL, userID rep
 	return id, nil
 }
 
-func (st *FileStorage) Get(ctx context.Context, id repositories.ID) (repositories.URL, error) {
+func (st *FileStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
-		return data.URL, nil
+		return data.URL, false, nil
 	}
-	return "", repositories.ErrURLNotFound
+	return "", false, repositories.ErrURLNotFound
 }
 
 func (st *FileStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
@@ -127,4 +127,8 @@ func (st *FileStorage) Pool(ctx context.Context) bool {
 
 func (st *FileStorage) Close() error {
 	return st.file.Close()
+}
+
+func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	return nil
 }

@@ -32,7 +32,8 @@ func NewRouter(handler *handlers.Handler) chi.Router {
 			})
 
 			r.Route("/user", func(r chi.Router) {
-				r.Get("/urls", handler.UserURLs)
+				r.Get("/urls", handler.AddUserURLs)
+				r.Delete("/urls", handler.DeleteUserURLs)
 			})
 		})
 	})

@@ -102,25 +102,24 @@ func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID rep
 	return id, err
 }
 
-func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (string, error) {
+func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	var url repositories.URL
-	row := st.db.QueryRow(ctx, `SELECT url FROM links WHERE id = $1`, id)
-	err := row.Scan(&url)
+	row := st.db.QueryRow(ctx, `SELECT url, deleted FROM links WHERE id = $1`, id)
+	err = row.Scan(&url, &deleted)
 	if err != nil {
 		log.Printf("query failed: %v", err)
 	}
 
-	return url, err
+	return
 }
 
 func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	rows, err := st.db.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1`, user)
+	rows, err := st.db.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`, user)
 	if err != nil {
 		log.Printf("query failed: %v", err)
 		return nil, err
@@ -143,4 +142,30 @@ func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User)
 
 func (st *PsqlStorage) Pool(ctx context.Context) bool {
 	return st.db.Ping(ctx) == nil
+}
+
+func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	tx, err := st.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func(tx pgx.Tx, ctx context.Context) {
+		err = tx.Rollback(ctx)
+		if err != nil && err != pgx.ErrTxClosed {
+			log.Printf("unable to rollback tx: %v", err)
+		}
+	}(tx, ctx)
+
+	for _, id := range ids {
+		_, err = tx.Exec(ctx, `UPDATE links SET deleted = TRUE WHERE id = $1 AND user_id = $2`, id, user)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit(ctx)
+	return err
 }

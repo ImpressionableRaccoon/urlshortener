@@ -45,13 +45,12 @@ func (st *MemStorage) Add(ctx context.Context, url repositories.URL, userID repo
 	return id, nil
 }
 
-func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (repositories.URL, error) {
+func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
-		return data.URL, nil
+		return data.URL, false, nil
 	}
-
-	return "", repositories.ErrURLNotFound
+	return "", false, repositories.ErrURLNotFound
 }
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
@@ -73,4 +72,8 @@ func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) 
 
 func (st *MemStorage) Pool(ctx context.Context) bool {
 	return true
+}
+
+func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	return nil
 }

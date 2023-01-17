@@ -12,9 +12,10 @@ import (
 )
 
 type Storager interface {
-	Add(ctx context.Context, url repositories.URL, userID repositories.User) (repositories.ID, error)
-	Get(ctx context.Context, id repositories.ID) (repositories.URL, error)
-	GetUserLinks(ctx context.Context, user repositories.User) ([]repositories.UserLink, error)
+	Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error)
+	Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error)
+	GetUserLinks(ctx context.Context, user repositories.User) (links []repositories.UserLink, err error)
+	DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error
 	Pool(ctx context.Context) bool
 }
 
