@@ -29,7 +29,7 @@ func TestFileStorage(t *testing.T) {
 	testUser := uuid.New()
 
 	t.Run("URL not found", func(t *testing.T) {
-		r, err := st.Get(context.Background(), "test")
+		r, _, err := st.Get(context.Background(), "test")
 		require.NotNil(t, err)
 		assert.Equal(t, "", r)
 	})
@@ -41,7 +41,7 @@ func TestFileStorage(t *testing.T) {
 	})
 
 	t.Run("get test URL", func(t *testing.T) {
-		r, err := st.Get(context.Background(), id)
+		r, _, err := st.Get(context.Background(), id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
 	})
@@ -67,7 +67,7 @@ func TestFileStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("get test URL after restart", func(t *testing.T) {
-		r, err := st.Get(context.Background(), id)
+		r, _, err := st.Get(context.Background(), id)
 		require.Nil(t, err)
 		assert.Equal(t, url, r)
 	})
