@@ -11,8 +11,9 @@ type (
 )
 
 type LinkData struct {
-	URL  URL
-	User User
+	URL     URL
+	User    User
+	Deleted bool
 }
 
 type UserLink struct {
