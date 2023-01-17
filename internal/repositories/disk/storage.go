@@ -112,7 +112,7 @@ func (st *FileStorage) GetUserLinks(ctx context.Context, user repositories.User)
 			continue
 		}
 
-		if value.Deleted == true {
+		if value.Deleted {
 			continue
 		}
 
