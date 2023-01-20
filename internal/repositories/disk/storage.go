@@ -10,13 +10,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
-
 	"github.com/google/uuid"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type FileStorage struct {

@@ -7,10 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-
 	"github.com/google/uuid"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
