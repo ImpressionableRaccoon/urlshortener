@@ -12,8 +12,7 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
-	// TODO: config
+	configs.Load()
 
 	s, err := storage.NewStorager()
 	if err != nil {

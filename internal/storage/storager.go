@@ -28,8 +28,6 @@ const (
 )
 
 func NewStorager() (Storager, error) {
-	configs.Load()
-
 	var err error
 	switch getStoragerType() {
 	case PsqlStorage:
