@@ -3,6 +3,7 @@ package disk
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -54,7 +55,13 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 
 		switch command {
 		case "NEW":
-			url := splitted[3]
+			var data []byte
+			data, err = base64.StdEncoding.DecodeString(splitted[3])
+			if err != nil {
+				log.Printf("unable to decode url: %v", err)
+				continue
+			}
+			url := repositories.URL(data)
 			st.IDLinkDataDictionary[id] = repositories.LinkData{
 				URL:  url,
 				User: user,
@@ -105,7 +112,8 @@ func (st *FileStorage) Add(ctx context.Context, url repositories.URL, user repos
 	}
 	st.ExistingURLs[url] = id
 
-	err = st.write(fmt.Sprintf("NEW,%s,%s,%s", id, user.String(), url))
+	err = st.write(fmt.Sprintf("NEW,%s,%s,%s",
+		id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
 	return id, err
 }
 
