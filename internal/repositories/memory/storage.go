@@ -3,12 +3,14 @@ package memory
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type MemStorage struct {
+	sync.RWMutex
 	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
 	ExistingURLs         map[repositories.URL]repositories.ID
 }
@@ -22,24 +24,26 @@ func NewMemoryStorage() (*MemStorage, error) {
 	return st, nil
 }
 
-func (st *MemStorage) add() {
-
+func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	return st.AddLink(url, user)
 }
 
-func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	st.Lock()
+	defer st.Unlock()
+
 	value, ok := st.ExistingURLs[url]
 	if ok {
 		return value, repositories.ErrURLAlreadyExists
 	}
 
-	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
+	for exists := true; exists; _, exists = st.IDLinkDataDictionary[id] {
 		id, err = utils.GenRandomID()
 		if err != nil {
 			log.Printf("generate id failed: %v", err)
 			return "", err
 		}
 	}
-
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
 		User: user,
@@ -50,14 +54,21 @@ func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user reposi
 }
 
 func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
+	st.RLock()
+	defer st.RUnlock()
+
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
 		return data.URL, data.Deleted, nil
 	}
+
 	return "", false, repositories.ErrURLNotFound
 }
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+	st.RLock()
+	st.RUnlock()
+
 	data = make([]repositories.UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
@@ -83,6 +94,9 @@ func (st *MemStorage) Pool(ctx context.Context) bool {
 }
 
 func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User) (ok bool) {
+	st.Lock()
+	defer st.Unlock()
+
 	link, ok := st.IDLinkDataDictionary[id]
 	if !ok {
 		return false

@@ -15,13 +15,12 @@ import (
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type FileStorage struct {
 	memory.MemStorage
 	file      *os.File
-	fileWrite sync.Mutex
+	fileMutex sync.Mutex
 }
 
 func NewFileStorage(file *os.File) (*FileStorage, error) {
@@ -30,6 +29,9 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	}
 	st.IDLinkDataDictionary = make(map[repositories.ID]repositories.LinkData)
 	st.ExistingURLs = make(map[repositories.URL]repositories.ID)
+
+	st.Lock()
+	defer st.Unlock()
 
 	reader := bufio.NewReader(file)
 
@@ -84,6 +86,9 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 }
 
 func (st *FileStorage) write(data string) error {
+	st.fileMutex.Lock()
+	defer st.fileMutex.Unlock()
+
 	_, err := st.file.Write([]byte(data + "\n"))
 	return err
 }
@@ -93,28 +98,13 @@ func (st *FileStorage) Close() error {
 }
 
 func (st *FileStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
-	value, ok := st.ExistingURLs[url]
-	if ok {
-		return value, repositories.ErrURLAlreadyExists
+	id, err = st.AddLink(url, user)
+	if err != nil {
+		return
 	}
 
-	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
-		id, err = utils.GenRandomID()
-		if err != nil {
-			log.Printf("generate id failed: %v", err)
-			return "", err
-		}
-	}
-
-	st.IDLinkDataDictionary[id] = repositories.LinkData{
-		URL:  url,
-		User: user,
-	}
-	st.ExistingURLs[url] = id
-
-	err = st.write(fmt.Sprintf("NEW,%s,%s,%s",
-		id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
-	return id, err
+	err = st.write(fmt.Sprintf("NEW,%s,%s,%s", id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
+	return
 }
 
 func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
