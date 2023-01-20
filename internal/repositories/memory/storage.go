@@ -67,7 +67,7 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
 	st.RLock()
-	st.RUnlock()
+	defer st.RUnlock()
 
 	data = make([]repositories.UserLink, 0)
 
