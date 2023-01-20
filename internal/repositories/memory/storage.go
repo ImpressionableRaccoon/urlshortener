@@ -10,20 +10,24 @@ import (
 
 type MemStorage struct {
 	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
-	existingURLs         map[repositories.URL]repositories.ID
+	ExistingURLs         map[repositories.URL]repositories.ID
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
-		existingURLs:         make(map[repositories.URL]repositories.ID),
+		ExistingURLs:         make(map[repositories.URL]repositories.ID),
 	}
 
 	return st, nil
 }
 
-func (st *MemStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
-	value, ok := st.existingURLs[url]
+func (st *MemStorage) add() {
+
+}
+
+func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	value, ok := st.ExistingURLs[url]
 	if ok {
 		return value, repositories.ErrURLAlreadyExists
 	}
@@ -38,9 +42,9 @@ func (st *MemStorage) Add(ctx context.Context, url repositories.URL, userID repo
 
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
-		User: userID,
+		User: user,
 	}
-	st.existingURLs[url] = id
+	st.ExistingURLs[url] = id
 
 	return id, nil
 }
@@ -78,17 +82,22 @@ func (st *MemStorage) Pool(ctx context.Context) bool {
 	return true
 }
 
+func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User) (ok bool) {
+	link, ok := st.IDLinkDataDictionary[id]
+	if !ok {
+		return false
+	}
+	if link.User != user {
+		return false
+	}
+	link.Deleted = true
+	st.IDLinkDataDictionary[id] = link
+	return true
+}
+
 func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
-		link, ok := st.IDLinkDataDictionary[id]
-		if !ok {
-			continue
-		}
-		if link.User != user {
-			continue
-		}
-		link.Deleted = true
-		st.IDLinkDataDictionary[id] = link
+		_ = st.DeleteUserLink(id, user)
 	}
 	return nil
 }

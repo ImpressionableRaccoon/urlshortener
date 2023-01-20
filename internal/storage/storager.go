@@ -30,37 +30,27 @@ const (
 func NewStorager() (Storager, error) {
 	configs.Load()
 
-	var s Storager
 	var err error
-
 	switch getStoragerType() {
 	case PsqlStorage:
-		s, err = postgres.NewPsqlStorage(configs.DatabaseDSN)
+		return postgres.NewPsqlStorage(configs.DatabaseDSN)
+	case FileStorage:
+		var file *os.File
+		file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
 		if err != nil {
 			return nil, err
 		}
-	case FileStorage:
-		var file *os.File
-		if file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777); err != nil {
-			return nil, err
-		}
-		if s, err = disk.NewFileStorage(file); err != nil {
-			return nil, err
-		}
+		return disk.NewFileStorage(file)
 	default:
-		if s, err = memory.NewMemoryStorage(); err != nil {
-			return nil, err
-		}
+		return memory.NewMemoryStorage()
 	}
-
-	return s, nil
 }
 
 func getStoragerType() StoragerType {
-	if dsn := configs.DatabaseDSN; dsn != "" {
+	if configs.DatabaseDSN != "" {
 		return PsqlStorage
 	}
-	if path := configs.FileStoragePath; path != "" {
+	if configs.FileStoragePath != "" {
 		return FileStorage
 	}
 	return MemoryStorage
