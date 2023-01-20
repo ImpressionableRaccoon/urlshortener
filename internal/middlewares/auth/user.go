@@ -64,6 +64,7 @@ func createNewUser(w http.ResponseWriter) string {
 		Name:    "USER",
 		Value:   base64.StdEncoding.EncodeToString(append(b, sign...)),
 		Expires: time.Now().Add(365 * 24 * time.Hour),
+		Path:    "/",
 	}
 
 	http.SetCookie(w, &cookie)
