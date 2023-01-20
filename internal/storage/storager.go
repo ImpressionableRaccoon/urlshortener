@@ -59,9 +59,9 @@ func NewStorager() (Storager, error) {
 func getStoragerType() StoragerType {
 	if dsn := configs.DatabaseDSN; dsn != "" {
 		return PsqlStorage
-	} else if path := configs.FileStoragePath; path != "" {
-		return FileStorage
-	} else {
-		return MemoryStorage
 	}
+	if path := configs.FileStoragePath; path != "" {
+		return FileStorage
+	}
+	return MemoryStorage
 }

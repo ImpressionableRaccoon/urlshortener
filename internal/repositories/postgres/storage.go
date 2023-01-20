@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/lib/pq"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
@@ -148,24 +149,6 @@ func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.I
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	tx, err := st.db.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func(tx pgx.Tx, ctx context.Context) {
-		err = tx.Rollback(ctx)
-		if err != nil && err != pgx.ErrTxClosed {
-			log.Printf("unable to rollback tx: %v", err)
-		}
-	}(tx, ctx)
-
-	for _, id := range ids {
-		_, err = tx.Exec(ctx, `UPDATE links SET deleted = TRUE WHERE id = $1 AND user_id = $2`, id, user)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = tx.Commit(ctx)
+	_, err := st.db.Exec(ctx, `UPDATE links SET deleted = TRUE WHERE id = ANY($1) AND user_id = $2`, pq.Array(ids), user)
 	return err
 }

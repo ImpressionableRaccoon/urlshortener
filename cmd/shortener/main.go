@@ -13,6 +13,8 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	// TODO: config
+
 	s, err := storage.NewStorager()
 	if err != nil {
 		panic(err)
