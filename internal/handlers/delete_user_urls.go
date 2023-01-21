@@ -30,6 +30,8 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(string(b))
+
 	ids := make([]repositories.ID, 0)
 	err = json.Unmarshal(b, &ids)
 	if err != nil {
