@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
@@ -40,7 +39,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, id)
+	url := fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id)
 
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(url))

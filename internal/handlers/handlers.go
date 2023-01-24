@@ -5,16 +5,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
 type Handler struct {
-	st storage.Storager
+	st  storage.Storager
+	cfg *configs.Config
 }
 
-func NewHandler(s storage.Storager) *Handler {
+func NewHandler(s storage.Storager, cfg *configs.Config) *Handler {
 	h := &Handler{
-		st: s,
+		st:  s,
+		cfg: cfg,
 	}
 
 	return h

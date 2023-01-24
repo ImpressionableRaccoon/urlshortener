@@ -27,14 +27,14 @@ const (
 	PsqlStorage
 )
 
-func NewStorager() (Storager, error) {
+func NewStorager(cfg *configs.Config) (Storager, error) {
 	var err error
-	switch getStoragerType() {
+	switch getStoragerType(cfg) {
 	case PsqlStorage:
-		return postgres.NewPsqlStorage(configs.DatabaseDSN)
+		return postgres.NewPsqlStorage(cfg.DatabaseDSN)
 	case FileStorage:
 		var file *os.File
-		file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
+		file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
 		if err != nil {
 			return nil, err
 		}
@@ -44,11 +44,11 @@ func NewStorager() (Storager, error) {
 	}
 }
 
-func getStoragerType() StoragerType {
-	if configs.DatabaseDSN != "" {
+func getStoragerType(cfg *configs.Config) StoragerType {
+	if cfg.DatabaseDSN != "" {
 		return PsqlStorage
 	}
-	if configs.FileStoragePath != "" {
+	if cfg.FileStoragePath != "" {
 		return FileStorage
 	}
 	return MemoryStorage

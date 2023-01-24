@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
@@ -35,7 +34,7 @@ func (h *Handler) AddUserURLs(w http.ResponseWriter, r *http.Request) {
 	response := make([]UserLink, 0)
 	for _, link := range links {
 		response = append(response, UserLink{
-			ShortURL:    fmt.Sprintf("%s/%s", configs.ServerBaseURL, link.ID),
+			ShortURL:    fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, link.ID),
 			OriginalURL: link.URL,
 		})
 	}

@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
+
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
@@ -12,15 +14,19 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	configs.Load()
 
-	s, err := storage.NewStorager()
+	cfg := configs.NewConfig()
+
+	s, err := storage.NewStorager(cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	h := handlers.NewHandler(s)
-	r := routers.NewRouter(h)
+	h := handlers.NewHandler(s, cfg)
 
-	log.Fatal(http.ListenAndServe(configs.ServerAddress, r))
+	m := middlewares.NewMiddlewares(cfg)
+
+	r := routers.NewRouter(h, m)
+
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }

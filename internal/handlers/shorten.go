@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
@@ -56,7 +55,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := &ShortenURLResponse{
-		Result: fmt.Sprintf("%s/%s", configs.ServerBaseURL, id),
+		Result: fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id),
 	}
 
 	responseJSON, err := json.Marshal(response)

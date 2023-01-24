@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +51,9 @@ func testRequest(t *testing.T, ts *httptest.Server, jar http.CookieJar, method, 
 }
 
 func TestRouter(t *testing.T) {
-	s, err := storage.NewStorager()
+	cfg := configs.NewConfig()
+
+	s, err := storage.NewStorager(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -60,8 +64,9 @@ func TestRouter(t *testing.T) {
 		panic(err)
 	}
 
-	h := handlers.NewHandler(s)
-	r := NewRouter(h)
+	h := handlers.NewHandler(s, cfg)
+	m := middlewares.NewMiddlewares(cfg)
+	r := NewRouter(h, m)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -101,7 +106,7 @@ func TestRouter(t *testing.T) {
 		shortLink = string(body)
 		splitted := strings.Split(shortLink, "/")
 		shortLinkID = splitted[len(splitted)-1]
-		assert.Equal(t, fmt.Sprintf("%s/%s", configs.ServerBaseURL, shortLinkID), string(body))
+		assert.Equal(t, fmt.Sprintf("%s/%s", cfg.ServerBaseURL, shortLinkID), string(body))
 	})
 
 	t.Run("get URL from short link", func(t *testing.T) {

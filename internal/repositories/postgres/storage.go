@@ -16,7 +16,6 @@ import (
 	"github.com/lib/pq"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
@@ -43,7 +42,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil, err
 	}
 
-	err = st.doMigrate()
+	err = st.doMigrate(dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +50,8 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	return st, nil
 }
 
-func (st *PsqlStorage) doMigrate() error {
-	m, err := migrate.New("file://migrations/postgres", configs.DatabaseDSN)
+func (st *PsqlStorage) doMigrate(dsn string) error {
+	m, err := migrate.New("file://migrations/postgres", dsn)
 	if err != nil {
 		return err
 	}
