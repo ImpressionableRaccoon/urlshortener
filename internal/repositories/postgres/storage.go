@@ -64,7 +64,7 @@ func (st *PsqlStorage) doMigrate() error {
 }
 
 func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	var res pgconn.CommandTag
@@ -76,13 +76,13 @@ func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID rep
 			return "", err
 		}
 
-		res, err = st.db.Exec(ctx,
+		res, err = st.db.Exec(ctxLocal,
 			"INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
 			id, url, userID)
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			row := st.db.QueryRow(ctx, `SELECT id FROM links WHERE url = $1`, url)
+			row := st.db.QueryRow(ctxLocal, `SELECT id FROM links WHERE url = $1`, url)
 			err = row.Scan(&id)
 			if err != nil {
 				log.Printf("query failed: %v", err)
@@ -104,10 +104,10 @@ func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID rep
 }
 
 func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	row := st.db.QueryRow(ctx, `SELECT url, deleted FROM links WHERE id = $1`, id)
+	row := st.db.QueryRow(ctxLocal, `SELECT url, deleted FROM links WHERE id = $1`, id)
 	err = row.Scan(&url, &deleted)
 	if err != nil {
 		log.Printf("query failed: %v", err)
@@ -117,10 +117,10 @@ func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url reposit
 }
 
 func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	rows, err := st.db.Query(ctx, `SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`, user)
+	rows, err := st.db.Query(ctxLocal, `SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`, user)
 	if err != nil {
 		log.Printf("query failed: %v", err)
 		return nil, err
@@ -142,13 +142,16 @@ func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User)
 }
 
 func (st *PsqlStorage) Pool(ctx context.Context) bool {
-	return st.db.Ping(ctx) == nil
+	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	return st.db.Ping(ctxLocal) == nil
 }
 
 func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	_, err := st.db.Exec(ctx, `UPDATE links SET deleted = TRUE WHERE id = ANY($1) AND user_id = $2`, pq.Array(ids), user)
+	_, err := st.db.Exec(ctxLocal, `UPDATE links SET deleted = TRUE WHERE id = ANY($1) AND user_id = $2`, pq.Array(ids), user)
 	return err
 }
