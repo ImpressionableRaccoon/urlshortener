@@ -51,7 +51,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil, err
 	}
 
-	go st.deleteUserLinksWorker(context.Background(), 100)
+	go st.deleteUserLinksWorker(context.Background(), 100, time.Second)
 
 	return st, nil
 }
@@ -163,7 +163,7 @@ func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.I
 	return nil
 }
 
-func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int) {
+func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int, bufferTimeout time.Duration) {
 	ids := make([]repositories.ID, 0, bufferSize)
 	users := make([]repositories.User, 0, bufferSize)
 
@@ -171,7 +171,7 @@ func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int
 		ids = ids[:0]
 		users = users[:0]
 
-		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Second)
+		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, bufferTimeout)
 
 	loop:
 		for {
