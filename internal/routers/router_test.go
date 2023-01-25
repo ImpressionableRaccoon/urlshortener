@@ -124,7 +124,7 @@ func TestRouter(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("GET /ping: ping", func(t *testing.T) {
-		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/ping"), nil)
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, "/ping", nil)
 		assert.Equal(t, http.StatusOK, statusCode)
 	})
 
