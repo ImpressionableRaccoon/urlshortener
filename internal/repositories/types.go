@@ -20,3 +20,8 @@ type UserLink struct {
 	ID  ID
 	URL URL
 }
+
+type LinkPendingDeletion struct {
+	ID   ID
+	User User
+}

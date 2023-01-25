@@ -6,6 +6,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -13,7 +15,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lib/pq"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
@@ -21,11 +22,14 @@ import (
 )
 
 type PsqlStorage struct {
-	db *pgxpool.Pool
+	db       *pgxpool.Pool
+	deleteCh chan repositories.LinkPendingDeletion
 }
 
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
-	st := &PsqlStorage{}
+	st := &PsqlStorage{
+		deleteCh: make(chan repositories.LinkPendingDeletion),
+	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -46,6 +50,8 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go st.deleteUserLinksWorker(context.Background(), 100)
 
 	return st, nil
 }
@@ -148,9 +154,50 @@ func (st *PsqlStorage) Pool(ctx context.Context) bool {
 }
 
 func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
+	for _, id := range ids {
+		st.deleteCh <- repositories.LinkPendingDeletion{
+			ID:   id,
+			User: user,
+		}
+	}
+	return nil
+}
 
-	_, err := st.db.Exec(ctxLocal, `UPDATE links SET deleted = TRUE WHERE id = ANY($1) AND user_id = $2`, pq.Array(ids), user)
-	return err
+func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int) {
+	ids := make([]repositories.ID, 0, bufferSize)
+	users := make([]repositories.User, 0, bufferSize)
+
+	for {
+		ids = ids[:0]
+		users = users[:0]
+
+		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Second)
+
+	loop:
+		for {
+			select {
+			case v := <-st.deleteCh:
+				ids = append(ids, v.ID)
+				users = append(users, v.User)
+				if len(ids) == bufferSize {
+					timeoutCancel()
+					break loop
+				}
+			case <-timeoutCtx.Done():
+				break loop
+			}
+		}
+
+		if len(ids) == 0 {
+			continue
+		}
+
+		_, err := st.db.Exec(ctx,
+			`UPDATE links SET deleted = TRUE 
+             FROM (select unnest($1::text[]) as id, unnest($2::uuid[]) as user) as data_table
+             WHERE links.id = data_table.id AND user_id = data_table.user`, pq.Array(ids), pq.Array(users))
+		if err != nil {
+			log.Printf("update failed: %v", err)
+		}
+	}
 }
