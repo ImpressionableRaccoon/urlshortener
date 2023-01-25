@@ -4,9 +4,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 )
 
 func NewRouter(handler *handlers.Handler, m middlewares.Middlewares) chi.Router {
@@ -32,7 +31,7 @@ func NewRouter(handler *handlers.Handler, m middlewares.Middlewares) chi.Router 
 			})
 
 			r.Route("/user", func(r chi.Router) {
-				r.Get("/urls", handler.AddUserURLs)
+				r.Get("/urls", handler.GetUserURLs)
 				r.Delete("/urls", handler.DeleteUserURLs)
 			})
 		})

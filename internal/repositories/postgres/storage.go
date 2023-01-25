@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -15,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/lib/pq"
 	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"

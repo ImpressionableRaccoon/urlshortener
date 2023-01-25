@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 

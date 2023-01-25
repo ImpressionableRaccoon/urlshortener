@@ -1,6 +1,8 @@
 package middlewares
 
-import "github.com/ImpressionableRaccoon/urlshortener/configs"
+import (
+	"github.com/ImpressionableRaccoon/urlshortener/configs"
+)
 
 type Middlewares struct {
 	cfg *configs.Config
