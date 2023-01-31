@@ -30,11 +30,21 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st.IDLinkDataDictionary = make(map[repositories.ID]repositories.LinkData)
 	st.ExistingURLs = make(map[repositories.URL]repositories.ID)
 
+	err := st.load()
+	if err != nil {
+		return nil, err
+	}
+
+	return st, nil
+}
+
+func (st *FileStorage) load() error {
 	st.Lock()
 	defer st.Unlock()
 
-	reader := bufio.NewReader(file)
+	reader := bufio.NewReader(st.file)
 
+	i := 0
 	for {
 		bytes, err := reader.ReadBytes('\n')
 		if err == io.EOF {
@@ -42,47 +52,69 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 		}
 		if err != nil {
 			log.Printf("unable to read bytes: %v", err)
-			return nil, err
+			return err
 		}
 		line := strings.Trim(string(bytes), "\n")
 		splitted := strings.Split(line, ",")
 
-		command := splitted[0]
-		id := splitted[1]
-		user, err := uuid.Parse(splitted[2])
+		switch splitted[0] {
+		case "NEW":
+			err = st.loadNew(splitted)
+		case "DELETE":
+			err = st.loadDelete(splitted)
+		}
 		if err != nil {
-			log.Printf("unable to parse user: %v", err)
-			continue
+			log.Printf("unable to parse line %d: %v", i, err)
 		}
 
-		switch command {
-		case "NEW":
-			var data []byte
-			data, err = base64.StdEncoding.DecodeString(splitted[3])
-			if err != nil {
-				log.Printf("unable to decode url: %v", err)
-				continue
-			}
-			url := repositories.URL(data)
-			st.IDLinkDataDictionary[id] = repositories.LinkData{
-				URL:  url,
-				User: user,
-			}
-			st.ExistingURLs[url] = id
-		case "DELETE":
-			link, ok := st.IDLinkDataDictionary[id]
-			if !ok {
-				continue
-			}
-			if link.User != user {
-				continue
-			}
-			link.Deleted = true
-			st.IDLinkDataDictionary[id] = link
-		}
+		i++
 	}
 
-	return st, nil
+	return nil
+}
+
+func (st *FileStorage) loadNew(splitted []string) error {
+	id := splitted[1]
+	user, err := uuid.Parse(splitted[2])
+	if err != nil {
+		return repositories.ErrUnableParseUser
+	}
+
+	var data []byte
+	data, err = base64.StdEncoding.DecodeString(splitted[3])
+	if err != nil {
+		return repositories.ErrUnableDecodeURL
+	}
+	url := repositories.URL(data)
+
+	st.IDLinkDataDictionary[id] = repositories.LinkData{
+		URL:  url,
+		User: user,
+	}
+	st.ExistingURLs[url] = id
+
+	return nil
+}
+
+func (st *FileStorage) loadDelete(splitted []string) error {
+	id := splitted[1]
+	user, err := uuid.Parse(splitted[2])
+	if err != nil {
+		return repositories.ErrUnableParseUser
+	}
+
+	link, ok := st.IDLinkDataDictionary[id]
+	if !ok {
+		return repositories.ErrLinkNotExists
+	}
+	if link.User != user {
+		return repositories.ErrUserNotMatch
+	}
+
+	link.Deleted = true
+	st.IDLinkDataDictionary[id] = link
+
+	return nil
 }
 
 func (st *FileStorage) write(data string) error {
