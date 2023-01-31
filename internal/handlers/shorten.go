@@ -8,10 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type ShortenURLRequest struct {
@@ -39,7 +36,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uuid.Parse(r.Context().Value(utils.ContextKey("userID")).(string))
+	user, err := getUser(r)
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

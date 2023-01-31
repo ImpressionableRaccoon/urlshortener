@@ -7,17 +7,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
-	user, err := uuid.Parse(r.Context().Value(utils.ContextKey("userID")).(string))
+	user, err := getUser(r)
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
