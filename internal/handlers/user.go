@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"reflect"
 
 	"github.com/google/uuid"
 
@@ -15,10 +14,9 @@ var (
 )
 
 func getUser(r *http.Request) (user uuid.UUID, err error) {
-	value := r.Context().Value(utils.ContextKey("userID"))
-	if reflect.ValueOf(value).Kind() != reflect.String {
+	userID, ok := r.Context().Value(utils.ContextKey("userID")).(string)
+	if !ok {
 		return uuid.Nil, ErrValueIsNotString
 	}
-
-	return uuid.Parse(r.Context().Value(utils.ContextKey("userID")).(string))
+	return uuid.Parse(userID)
 }
