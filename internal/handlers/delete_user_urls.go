@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
@@ -35,7 +36,9 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		err = h.st.DeleteUserLinks(context.Background(), ids, user)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		err = h.st.DeleteUserLinks(ctx, ids, user)
 		if err != nil {
 			log.Printf("unable to delete user ids: %v", err)
 		}
