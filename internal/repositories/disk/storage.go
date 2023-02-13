@@ -3,34 +3,48 @@ package disk
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
 )
 
 type FileStorage struct {
-	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
-	existingURLs         map[repositories.URL]repositories.ID
-	file                 *os.File
-	writer               *bufio.Writer
+	memory.MemStorage
+	file      *os.File
+	fileMutex sync.Mutex
 }
 
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
-		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
-		existingURLs:         make(map[repositories.URL]repositories.ID),
-		file:                 file,
-		writer:               bufio.NewWriter(file),
+		file: file,
+	}
+	st.IDLinkDataDictionary = make(map[repositories.ID]repositories.LinkData)
+	st.ExistingURLs = make(map[repositories.URL]repositories.ID)
+
+	err := st.load()
+	if err != nil {
+		return nil, err
 	}
 
-	reader := bufio.NewReader(file)
+	return st, nil
+}
 
+func (st *FileStorage) load() error {
+	st.Lock()
+	defer st.Unlock()
+
+	reader := bufio.NewReader(st.file)
+
+	i := 0
 	for {
 		bytes, err := reader.ReadBytes('\n')
 		if err == io.EOF {
@@ -38,93 +52,102 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 		}
 		if err != nil {
 			log.Printf("unable to read bytes: %v", err)
-			return nil, err
+			return err
 		}
 		line := strings.Trim(string(bytes), "\n")
 		splitted := strings.Split(line, ",")
 
-		id := splitted[0]
-		url := splitted[1]
-
-		userID, err := uuid.Parse(splitted[2])
+		switch splitted[0] {
+		case "NEW":
+			err = st.loadNew(splitted)
+		case "DELETE":
+			err = st.loadDelete(splitted)
+		}
 		if err != nil {
-			log.Printf("unable to parse user: %v", err)
-			return nil, err
+			log.Printf("unable to parse line %d: %v", i, err)
 		}
 
-		st.IDLinkDataDictionary[id] = repositories.LinkData{
-			URL:  url,
-			User: userID,
-		}
-		st.existingURLs[url] = id
+		i++
 	}
 
-	return st, nil
+	return nil
 }
 
-func (st *FileStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
-	value, ok := st.existingURLs[url]
-	if ok {
-		return value, repositories.ErrURLAlreadyExists
+func (st *FileStorage) loadNew(splitted []string) error {
+	id := splitted[1]
+	user, err := uuid.Parse(splitted[2])
+	if err != nil {
+		return repositories.ErrUnableParseUser
 	}
 
-	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
-		id, err = utils.GenRandomID()
-		if err != nil {
-			log.Printf("generate id failed: %v", err)
-			return "", err
-		}
+	var data []byte
+	data, err = base64.StdEncoding.DecodeString(splitted[3])
+	if err != nil {
+		return repositories.ErrUnableDecodeURL
 	}
+	url := repositories.URL(data)
 
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
-		User: userID,
+		User: user,
 	}
-	st.existingURLs[url] = id
+	st.ExistingURLs[url] = id
 
-	data := []byte(id + "," + url + "," + userID.String() + "\n")
-	if _, err = st.writer.Write(data); err != nil {
-		log.Printf("write failed: %v", err)
-		return "", err
-	}
-	err = st.writer.Flush()
+	return nil
+}
+
+func (st *FileStorage) loadDelete(splitted []string) error {
+	id := splitted[1]
+	user, err := uuid.Parse(splitted[2])
 	if err != nil {
-		log.Printf("flush failed: %v", err)
-		return "", err
+		return repositories.ErrUnableParseUser
 	}
 
-	return id, nil
-}
-
-func (st *FileStorage) Get(ctx context.Context, id repositories.ID) (repositories.URL, error) {
-	data, ok := st.IDLinkDataDictionary[id]
-	if ok {
-		return data.URL, nil
+	link, ok := st.IDLinkDataDictionary[id]
+	if !ok {
+		return repositories.ErrLinkNotExists
 	}
-	return "", repositories.ErrURLNotFound
-}
-
-func (st *FileStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
-	data = make([]repositories.UserLink, 0)
-
-	for id, value := range st.IDLinkDataDictionary {
-		if value.User != user {
-			continue
-		}
-
-		data = append(data, repositories.UserLink{
-			ID:  id,
-			URL: value.URL,
-		})
+	if link.User != user {
+		return repositories.ErrUserNotMatch
 	}
 
-	return data, err
+	link.Deleted = true
+	st.IDLinkDataDictionary[id] = link
+
+	return nil
 }
 
-func (st *FileStorage) Pool(ctx context.Context) bool {
-	return true
+func (st *FileStorage) write(data string) error {
+	st.fileMutex.Lock()
+	defer st.fileMutex.Unlock()
+
+	_, err := st.file.Write([]byte(data + "\n"))
+	return err
 }
 
 func (st *FileStorage) Close() error {
 	return st.file.Close()
+}
+
+func (st *FileStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	id, err = st.AddLink(url, user)
+	if err != nil {
+		return
+	}
+
+	err = st.write(fmt.Sprintf("NEW,%s,%s,%s", id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
+	return
+}
+
+func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		ok := st.DeleteUserLink(id, user)
+		if ok {
+			err := st.write(fmt.Sprintf("DELETE,%s,%s", id, user.String()))
+			if err != nil {
+				log.Printf("unable to write delete: %v", err)
+			}
+		}
+	}
+	return nil
 }

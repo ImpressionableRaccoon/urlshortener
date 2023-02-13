@@ -1,25 +1,37 @@
 package routers
 
 import (
-	"context"
+	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
+
+type TestLink struct {
+	URL       repositories.URL
+	ShortLink repositories.URL
+	ID        repositories.ID
+	Delete    bool
+}
 
 func testRequest(t *testing.T, ts *httptest.Server, jar http.CookieJar, method, path string, body io.Reader) (int, []byte, http.Header) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
@@ -48,43 +60,87 @@ func testRequest(t *testing.T, ts *httptest.Server, jar http.CookieJar, method, 
 	return resp.StatusCode, respBody, resp.Header
 }
 
+func genTestLinks(count int) (res []TestLink, err error) {
+	sites := []string{
+		"google.com",
+		"yandex.ru",
+		"example.com",
+		"github.com",
+		"awesome.go",
+		"go.dev",
+	}
+	sitesLength := big.NewInt(int64(len(sites)))
+
+	res = make([]TestLink, 0, count)
+	for i := 0; i < count; i++ {
+		var n *big.Int
+		n, err = rand.Int(rand.Reader, sitesLength)
+		if err != nil {
+			return nil, err
+		}
+		site := sites[n.Int64()]
+
+		var page string
+		page, err = utils.GenRandomID()
+		if err != nil {
+			return nil, err
+		}
+
+		var del *big.Int
+		del, err = rand.Int(rand.Reader, big.NewInt(2))
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, TestLink{
+			URL:    fmt.Sprintf("https://%s/%s", site, page),
+			Delete: del.Int64() != 0,
+		})
+	}
+
+	return
+}
+
 func TestRouter(t *testing.T) {
-	s, err := storage.NewStorager()
-	if err != nil {
-		panic(err)
+	cfg := &configs.Config{
+		ServerAddress:   ":31222",
+		ServerBaseURL:   "http://localhost:31222",
+		FileStoragePath: "",
+		DatabaseDSN:     "",
+		CookieKey:       []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 	}
 
-	testURL := "https://google.com"
-	testID, err := s.Add(context.Background(), testURL, uuid.New())
-	if err != nil {
-		panic(err)
-	}
+	s, err := storage.NewStorager(cfg)
+	require.Nil(t, err)
 
-	h := handlers.NewHandler(s)
-	r := NewRouter(h)
+	h := handlers.NewHandler(s, cfg)
+	m := middlewares.NewMiddlewares(cfg)
+	r := NewRouter(h, m)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	jar, err := cookiejar.New(&cookiejar.Options{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	require.Nil(t, err)
 
-	t.Run("get test URL", func(t *testing.T) {
-		statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/%s", testID), nil)
-		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, testURL, header.Get("Location"))
+	t.Run("GET /ping: ping", func(t *testing.T) {
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, "/ping", nil)
+		assert.Equal(t, http.StatusOK, statusCode)
 	})
 
-	t.Run("get URL by wrong ID", func(t *testing.T) {
+	t.Run("GET /{id}: get URL by wrong ID", func(t *testing.T) {
 		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, "/test123", nil)
 		assert.Equal(t, http.StatusNotFound, statusCode)
 	})
 
-	t.Run("try to get short link for empty URL", func(t *testing.T) {
+	t.Run("POST /: try to get short link for empty URL", func(t *testing.T) {
 		statusCode, _, _ := testRequest(t, ts, jar, http.MethodPost, "/", strings.NewReader(""))
 		assert.Equal(t, http.StatusBadRequest, statusCode)
+	})
+
+	t.Run("GET /api/user/urls: no user URLs", func(t *testing.T) {
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodGet, "/api/user/urls", nil)
+		assert.Equal(t, http.StatusNoContent, statusCode)
 	})
 
 	t.Run("wrong PUT request", func(t *testing.T) {
@@ -92,64 +148,187 @@ func TestRouter(t *testing.T) {
 		assert.Equal(t, http.StatusMethodNotAllowed, statusCode)
 	})
 
-	originalLink := "https://example.com"
-	var shortLink, shortLinkID string
+	links, err := genTestLinks(10)
+	require.Nil(t, err)
 
-	t.Run("get short link for URL", func(t *testing.T) {
-		statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/", strings.NewReader(originalLink))
-		assert.Equal(t, http.StatusCreated, statusCode)
-		shortLink = string(body)
-		splitted := strings.Split(shortLink, "/")
-		shortLinkID = splitted[len(splitted)-1]
-		assert.Equal(t, fmt.Sprintf("%s/%s", configs.ServerBaseURL, shortLinkID), string(body))
-	})
-
-	t.Run("get URL from short link", func(t *testing.T) {
-		statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, "/"+shortLinkID, nil)
-		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, originalLink, header.Get("Location"))
-	})
-
-	t.Run("API: get short link for URL", func(t *testing.T) {
-		request := handlers.ShortenURLRequest{
-			URL: originalLink,
+	t.Run("POST /: short URLs", func(t *testing.T) {
+		for index, link := range links {
+			statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/", strings.NewReader(link.URL))
+			link.ShortLink = string(body)
+			splitted := strings.Split(link.ShortLink, "/")
+			link.ID = splitted[len(splitted)-1]
+			links[index] = link
+			assert.Equal(t, http.StatusCreated, statusCode)
+			assert.Equal(t, fmt.Sprintf("%s/%s", cfg.ServerBaseURL, link.ID), link.ShortLink)
 		}
-
-		requestJSON, err := json.Marshal(request)
-		if err != nil {
-			panic(err)
-		}
-
-		reader := strings.NewReader(string(requestJSON))
-
-		statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/api/shorten", reader)
-		assert.Equal(t, http.StatusConflict, statusCode)
-
-		var response handlers.ShortenURLResponse
-		err = json.Unmarshal(body, &response)
-		if err != nil {
-			panic(err)
-		}
-
-		url := response.Result
-		splitted := strings.Split(url, "/")
-		shortLinkID = splitted[len(splitted)-1]
 	})
 
-	t.Run("API: get URL from short link", func(t *testing.T) {
-		statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, "/"+shortLinkID, nil)
-		assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
-		assert.Equal(t, originalLink, header.Get("Location"))
+	t.Run("GET /{id}: get URLs", func(t *testing.T) {
+		for _, link := range links {
+			statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/%s", link.ID), nil)
+			assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+			assert.Equal(t, link.URL, header.Get("Location"))
+		}
 	})
 
-	t.Run("API: get URL from user URLs", func(t *testing.T) {
+	t.Run("GET /api/user/urls: get user URLs", func(t *testing.T) {
 		statusCode, body, _ := testRequest(t, ts, jar, http.MethodGet, "/api/user/urls", nil)
 		assert.Equal(t, http.StatusOK, statusCode)
-		var links []handlers.UserLink
-		json.Unmarshal(body, &links)
-		assert.Contains(t, links, handlers.UserLink{
-			ShortURL:    shortLink,
-			OriginalURL: originalLink,
-		})
+
+		data := make([]handlers.UserLink, 0)
+		err = json.Unmarshal(body, &data)
+		require.Nil(t, err)
+
+		for _, link := range links {
+			assert.Contains(t, data, handlers.UserLink{
+				ShortURL:    link.ShortLink,
+				OriginalURL: link.URL,
+			})
+		}
+	})
+
+	t.Run("DELETE /api/user/urls: delete user URLs", func(t *testing.T) {
+		linksIDs := make([]repositories.ID, 0)
+		for _, link := range links {
+			if link.Delete {
+				linksIDs = append(linksIDs, link.ID)
+				continue
+			}
+		}
+		var data []byte
+		data, err = json.Marshal(linksIDs)
+		require.Nil(t, err)
+
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodDelete, "/api/user/urls", bytes.NewReader(data))
+		assert.Equal(t, http.StatusAccepted, statusCode)
+	})
+
+	t.Run("GET /{id}: check if only needed links deleted", func(t *testing.T) {
+		for _, link := range links {
+			statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/%s", link.ID), nil)
+			if link.Delete {
+				assert.Equal(t, http.StatusGone, statusCode)
+			} else {
+				assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+				assert.Equal(t, link.URL, header.Get("Location"))
+			}
+		}
+	})
+
+	shortenLinks, err := genTestLinks(10)
+	require.Nil(t, err)
+
+	t.Run("POST /api/shorten: short URLs", func(t *testing.T) {
+		for index, link := range shortenLinks {
+			var request []byte
+			request, err = json.Marshal(handlers.ShortenURLRequest{
+				URL: link.URL,
+			})
+			require.Nil(t, err)
+
+			statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/api/shorten", bytes.NewReader(request))
+
+			response := handlers.ShortenURLResponse{}
+			err = json.Unmarshal(body, &response)
+			require.Nil(t, err)
+
+			link.ShortLink = response.Result
+			splitted := strings.Split(link.ShortLink, "/")
+			link.ID = splitted[len(splitted)-1]
+			shortenLinks[index] = link
+
+			assert.Equal(t, http.StatusCreated, statusCode)
+			assert.Equal(t, fmt.Sprintf("%s/%s", cfg.ServerBaseURL, link.ID), link.ShortLink)
+		}
+	})
+
+	t.Run("DELETE /api/user/urls: delete URLs from /api/shorten", func(t *testing.T) {
+		linksIDs := make([]repositories.ID, 0)
+		for _, link := range shortenLinks {
+			if link.Delete {
+				linksIDs = append(linksIDs, link.ID)
+				continue
+			}
+		}
+		var data []byte
+		data, err = json.Marshal(linksIDs)
+		require.Nil(t, err)
+
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodDelete, "/api/user/urls", bytes.NewReader(data))
+		assert.Equal(t, http.StatusAccepted, statusCode)
+	})
+
+	t.Run("GET /{id}: get URLs from /api/shorten", func(t *testing.T) {
+		for _, link := range shortenLinks {
+			statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/%s", link.ID), nil)
+			if link.Delete {
+				assert.Equal(t, http.StatusGone, statusCode)
+			} else {
+				assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+				assert.Equal(t, link.URL, header.Get("Location"))
+			}
+		}
+	})
+
+	shortenBatch, err := genTestLinks(1000)
+	require.Nil(t, err)
+
+	t.Run("POST /api/shorten/batch: short URLs", func(t *testing.T) {
+		data := make([]handlers.BatchRequest, 0)
+		for index, link := range shortenBatch {
+			data = append(data, handlers.BatchRequest{
+				CorrelationID: strconv.Itoa(index),
+				OriginalURL:   link.URL,
+			})
+		}
+
+		var request []byte
+		request, err = json.Marshal(data)
+		require.Nil(t, err)
+
+		statusCode, body, _ := testRequest(t, ts, jar, http.MethodPost, "/api/shorten/batch", bytes.NewReader(request))
+		assert.Equal(t, http.StatusCreated, statusCode)
+
+		response := make([]handlers.BatchResponse, 0)
+		err = json.Unmarshal(body, &response)
+		require.Nil(t, err)
+
+		for _, link := range response {
+			var id int
+			id, err = strconv.Atoi(link.CorrelationID)
+			require.Nil(t, err)
+
+			shortenBatch[id].ShortLink = link.ShortURL
+			splitted := strings.Split(shortenBatch[id].ShortLink, "/")
+			shortenBatch[id].ID = splitted[len(splitted)-1]
+		}
+	})
+
+	t.Run("DELETE /api/user/urls: delete URLs from /api/shorten/batch", func(t *testing.T) {
+		linksIDs := make([]repositories.ID, 0)
+		for _, link := range shortenBatch {
+			if link.Delete {
+				linksIDs = append(linksIDs, link.ID)
+				continue
+			}
+		}
+		var data []byte
+		data, err = json.Marshal(linksIDs)
+		require.Nil(t, err)
+
+		statusCode, _, _ := testRequest(t, ts, jar, http.MethodDelete, "/api/user/urls", bytes.NewReader(data))
+		assert.Equal(t, http.StatusAccepted, statusCode)
+	})
+
+	t.Run("GET /{id}: get URLs from /api/shorten/batch", func(t *testing.T) {
+		for _, link := range shortenBatch {
+			statusCode, _, header := testRequest(t, ts, jar, http.MethodGet, fmt.Sprintf("/%s", link.ID), nil)
+			if link.Delete {
+				assert.Equal(t, http.StatusGone, statusCode)
+			} else {
+				assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
+				assert.Equal(t, link.URL, header.Get("Location"))
+			}
+		}
 	})
 }

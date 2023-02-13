@@ -12,9 +12,10 @@ import (
 )
 
 type Storager interface {
-	Add(ctx context.Context, url repositories.URL, userID repositories.User) (repositories.ID, error)
-	Get(ctx context.Context, id repositories.ID) (repositories.URL, error)
-	GetUserLinks(ctx context.Context, user repositories.User) ([]repositories.UserLink, error)
+	Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error)
+	Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error)
+	GetUserLinks(ctx context.Context, user repositories.User) (links []repositories.UserLink, err error)
+	DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error
 	Pool(ctx context.Context) bool
 }
 
@@ -26,41 +27,29 @@ const (
 	PsqlStorage
 )
 
-func NewStorager() (Storager, error) {
-	configs.Load()
-
-	var s Storager
+func NewStorager(cfg *configs.Config) (Storager, error) {
 	var err error
-
-	switch getStoragerType() {
+	switch getStoragerType(cfg) {
 	case PsqlStorage:
-		s, err = postgres.NewPsqlStorage(configs.DatabaseDSN)
+		return postgres.NewPsqlStorage(cfg.DatabaseDSN)
+	case FileStorage:
+		var file *os.File
+		file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
 		if err != nil {
 			return nil, err
 		}
-	case FileStorage:
-		var file *os.File
-		if file, err = os.OpenFile(configs.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777); err != nil {
-			return nil, err
-		}
-		if s, err = disk.NewFileStorage(file); err != nil {
-			return nil, err
-		}
+		return disk.NewFileStorage(file)
 	default:
-		if s, err = memory.NewMemoryStorage(); err != nil {
-			return nil, err
-		}
+		return memory.NewMemoryStorage()
 	}
-
-	return s, nil
 }
 
-func getStoragerType() StoragerType {
-	if dsn := configs.DatabaseDSN; dsn != "" {
+func getStoragerType(cfg *configs.Config) StoragerType {
+	if cfg.DatabaseDSN != "" {
 		return PsqlStorage
-	} else if path := configs.FileStoragePath; path != "" {
-		return FileStorage
-	} else {
-		return MemoryStorage
 	}
+	if cfg.FileStoragePath != "" {
+		return FileStorage
+	}
+	return MemoryStorage
 }

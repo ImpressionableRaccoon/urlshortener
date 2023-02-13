@@ -3,62 +3,80 @@ package memory
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 type MemStorage struct {
+	sync.RWMutex
 	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
-	existingURLs         map[repositories.URL]repositories.ID
+	ExistingURLs         map[repositories.URL]repositories.ID
 }
 
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
-		existingURLs:         make(map[repositories.URL]repositories.ID),
+		ExistingURLs:         make(map[repositories.URL]repositories.ID),
 	}
 
 	return st, nil
 }
 
-func (st *MemStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
-	value, ok := st.existingURLs[url]
+func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	return st.AddLink(url, user)
+}
+
+func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+	st.Lock()
+	defer st.Unlock()
+
+	value, ok := st.ExistingURLs[url]
 	if ok {
 		return value, repositories.ErrURLAlreadyExists
 	}
 
-	for ok := true; ok; _, ok = st.IDLinkDataDictionary[id] {
+	for exists := true; exists; _, exists = st.IDLinkDataDictionary[id] {
 		id, err = utils.GenRandomID()
 		if err != nil {
 			log.Printf("generate id failed: %v", err)
 			return "", err
 		}
 	}
-
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
-		User: userID,
+		User: user,
 	}
-	st.existingURLs[url] = id
+	st.ExistingURLs[url] = id
 
 	return id, nil
 }
 
-func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (repositories.URL, error) {
+func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
+	st.RLock()
+	defer st.RUnlock()
+
 	data, ok := st.IDLinkDataDictionary[id]
 	if ok {
-		return data.URL, nil
+		return data.URL, data.Deleted, nil
 	}
 
-	return "", repositories.ErrURLNotFound
+	return "", false, repositories.ErrURLNotFound
 }
 
 func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+	st.RLock()
+	defer st.RUnlock()
+
 	data = make([]repositories.UserLink, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
 		if value.User != user {
+			continue
+		}
+
+		if value.Deleted {
 			continue
 		}
 
@@ -73,4 +91,27 @@ func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) 
 
 func (st *MemStorage) Pool(ctx context.Context) bool {
 	return true
+}
+
+func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User) (ok bool) {
+	st.Lock()
+	defer st.Unlock()
+
+	link, ok := st.IDLinkDataDictionary[id]
+	if !ok {
+		return false
+	}
+	if link.User != user {
+		return false
+	}
+	link.Deleted = true
+	st.IDLinkDataDictionary[id] = link
+	return true
+}
+
+func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		_ = st.DeleteUserLink(id, user)
+	}
+	return nil
 }

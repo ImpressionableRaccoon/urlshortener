@@ -7,11 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
-
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
-	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
 func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
@@ -24,11 +20,10 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := r.Context().Value(utils.ContextKey("userID")).(string)
-	user, err := uuid.Parse(value)
+	user, err := getUser(r)
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -40,7 +35,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", configs.ServerBaseURL, id)
+	url := fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id)
 
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(url))

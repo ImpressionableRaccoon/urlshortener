@@ -1,4 +1,4 @@
-package auth
+package middlewares
 
 import (
 	"context"
@@ -10,30 +10,29 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
-func UserCookie(next http.Handler) http.Handler {
+func (m *Middlewares) UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("USER")
 		if err == http.ErrNoCookie || len(cookie.Value) < 16 {
-			setNewUser(next, w, r, createNewUser(w))
+			m.setNewUser(next, w, r, m.createNewUser(w))
 			return
 		}
 
 		payload, err := base64.StdEncoding.DecodeString(cookie.Value)
 		if err != nil || len(payload) < 16 {
-			setNewUser(next, w, r, createNewUser(w))
+			m.setNewUser(next, w, r, m.createNewUser(w))
 			return
 		}
 
-		h := hmac.New(sha256.New, configs.CookieKey)
+		h := hmac.New(sha256.New, m.cfg.CookieKey)
 		h.Write(payload[:16])
 		sign := h.Sum(nil)
 
 		if !hmac.Equal(sign, payload[16:]) {
-			setNewUser(next, w, r, createNewUser(w))
+			m.setNewUser(next, w, r, m.createNewUser(w))
 			return
 		}
 
@@ -42,21 +41,21 @@ func UserCookie(next http.Handler) http.Handler {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
-		setNewUser(next, w, r, user.String())
+		m.setNewUser(next, w, r, user.String())
 	})
 }
 
-func setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
+func (m *Middlewares) setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
 	ctx := context.WithValue(r.Context(), utils.ContextKey("userID"), user)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
-func createNewUser(w http.ResponseWriter) string {
+func (m *Middlewares) createNewUser(w http.ResponseWriter) string {
 	user := uuid.New()
 
 	b, _ := user.MarshalBinary()
 
-	h := hmac.New(sha256.New, configs.CookieKey)
+	h := hmac.New(sha256.New, m.cfg.CookieKey)
 	h.Write(b)
 	sign := h.Sum(nil)
 
@@ -64,6 +63,7 @@ func createNewUser(w http.ResponseWriter) string {
 		Name:    "USER",
 		Value:   base64.StdEncoding.EncodeToString(append(b, sign...)),
 		Expires: time.Now().Add(365 * 24 * time.Hour),
+		Path:    "/",
 	}
 
 	http.SetCookie(w, &cookie)
