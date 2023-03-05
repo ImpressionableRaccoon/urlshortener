@@ -6,20 +6,22 @@ import (
 )
 
 type Config struct {
-	ServerAddress   string
-	ServerBaseURL   string
-	FileStoragePath string
-	DatabaseDSN     string
-	CookieKey       []byte
+	ServerAddress      string
+	PprofServerAddress string
+	ServerBaseURL      string
+	FileStoragePath    string
+	DatabaseDSN        string
+	CookieKey          []byte
 }
 
 func NewConfig() Config {
 	cfg := Config{
-		ServerAddress:   ":8080",
-		ServerBaseURL:   "http://localhost:8080",
-		FileStoragePath: "",
-		DatabaseDSN:     "",
-		CookieKey:       []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
+		ServerAddress:      ":8080",
+		PprofServerAddress: "",
+		ServerBaseURL:      "http://localhost:8080",
+		FileStoragePath:    "",
+		DatabaseDSN:        "",
+		CookieKey:          []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
 	}
 
 	loadEnv(&cfg)

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
@@ -26,6 +27,16 @@ func main() {
 	m := middlewares.NewMiddlewares(cfg)
 
 	r := routers.NewRouter(h, m)
+
+	go func() {
+		if cfg.PprofServerAddress == "" {
+			return
+		}
+		err := http.ListenAndServe(cfg.PprofServerAddress, nil)
+		if err != nil {
+			log.Printf("pprof server error: %s\n", err)
+		}
+	}()
 
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
