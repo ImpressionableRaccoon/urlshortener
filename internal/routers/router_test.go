@@ -102,7 +102,7 @@ func genTestLinks(count int) (res []TestLink, err error) {
 }
 
 func TestRouter(t *testing.T) {
-	cfg := &configs.Config{
+	cfg := configs.Config{
 		ServerAddress:   ":31222",
 		ServerBaseURL:   "http://localhost:31222",
 		FileStoragePath: "",

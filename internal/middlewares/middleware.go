@@ -5,10 +5,10 @@ import (
 )
 
 type Middlewares struct {
-	cfg *configs.Config
+	cfg configs.Config
 }
 
-func NewMiddlewares(cfg *configs.Config) Middlewares {
+func NewMiddlewares(cfg configs.Config) Middlewares {
 	return Middlewares{
 		cfg: cfg,
 	}

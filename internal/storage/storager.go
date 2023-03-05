@@ -27,7 +27,7 @@ const (
 	PsqlStorage
 )
 
-func NewStorager(cfg *configs.Config) (Storager, error) {
+func NewStorager(cfg configs.Config) (Storager, error) {
 	var err error
 	switch getStoragerType(cfg) {
 	case PsqlStorage:
@@ -44,7 +44,7 @@ func NewStorager(cfg *configs.Config) (Storager, error) {
 	}
 }
 
-func getStoragerType(cfg *configs.Config) StoragerType {
+func getStoragerType(cfg configs.Config) StoragerType {
 	if cfg.DatabaseDSN != "" {
 		return PsqlStorage
 	}

@@ -11,10 +11,10 @@ import (
 
 type Handler struct {
 	st  storage.Storager
-	cfg *configs.Config
+	cfg configs.Config
 }
 
-func NewHandler(s storage.Storager, cfg *configs.Config) *Handler {
+func NewHandler(s storage.Storager, cfg configs.Config) *Handler {
 	h := &Handler{
 		st:  s,
 		cfg: cfg,
