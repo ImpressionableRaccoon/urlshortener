@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "text/plain; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	b, err := io.ReadAll(r.Body)

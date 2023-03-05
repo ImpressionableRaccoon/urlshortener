@@ -13,15 +13,17 @@ import (
 
 type correlationID = string
 
-type BatchRequest struct {
-	CorrelationID correlationID    `json:"correlation_id"`
-	OriginalURL   repositories.URL `json:"original_url"`
-}
+type (
+	BatchRequest struct {
+		CorrelationID correlationID    `json:"correlation_id"`
+		OriginalURL   repositories.URL `json:"original_url"`
+	}
 
-type BatchResponse struct {
-	CorrelationID correlationID    `json:"correlation_id"`
-	ShortURL      repositories.URL `json:"short_url"`
-}
+	BatchResponse struct {
+		CorrelationID correlationID    `json:"correlation_id"`
+		ShortURL      repositories.URL `json:"short_url"`
+	}
+)
 
 func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
@@ -66,7 +68,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(responseJSON)

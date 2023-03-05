@@ -20,6 +20,11 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
+const (
+	deleteBufferSize    = 100
+	deleteBufferTimeout = time.Second
+)
+
 type PsqlStorage struct {
 	db       *pgxpool.Pool
 	deleteCh chan repositories.LinkPendingDeletion
@@ -50,24 +55,16 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil, err
 	}
 
-	go st.deleteUserLinksWorker(context.Background(), 100, time.Second)
+	go st.deleteUserLinksWorker(context.Background(), deleteBufferSize, deleteBufferTimeout)
 
 	return st, nil
 }
 
-func (st *PsqlStorage) doMigrate(dsn string) error {
-	m, err := migrate.New("file://migrations/postgres", dsn)
-	if err != nil {
-		return err
-	}
-	err = m.Up()
-	if errors.Is(err, migrate.ErrNoChange) {
-		return nil
-	}
-	return err
-}
-
-func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID repositories.User) (id repositories.ID, err error) {
+func (st *PsqlStorage) Add(
+	ctx context.Context,
+	url repositories.URL,
+	userID repositories.User,
+) (id repositories.ID, err error) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -80,9 +77,11 @@ func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID rep
 			return "", err
 		}
 
-		res, err = st.db.Exec(ctxLocal,
-			"INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
-			id, url, userID)
+		res, err = st.db.Exec(
+			ctxLocal,
+			`INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
+			id, url, userID,
+		)
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -104,27 +103,40 @@ func (st *PsqlStorage) Add(ctx context.Context, url repositories.URL, userID rep
 		}
 	}
 
-	return id, err
+	return id, nil
 }
 
 func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	row := st.db.QueryRow(ctxLocal, `SELECT url, deleted FROM links WHERE id = $1`, id)
+	row := st.db.QueryRow(
+		ctxLocal,
+		`SELECT url, deleted FROM links WHERE id = $1`,
+		id,
+	)
+
 	err = row.Scan(&url, &deleted)
 	if err != nil {
 		log.Printf("query failed: %v", err)
+		return "", false, err
 	}
 
-	return
+	return url, deleted, nil
 }
 
-func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+func (st *PsqlStorage) GetUserLinks(
+	ctx context.Context,
+	user repositories.User,
+) (data []repositories.UserLink, err error) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	rows, err := st.db.Query(ctxLocal, `SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`, user)
+	rows, err := st.db.Query(
+		ctxLocal,
+		`SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`,
+		user,
+	)
 	if err != nil {
 		log.Printf("query failed: %v", err)
 		return nil, err
@@ -145,21 +157,35 @@ func (st *PsqlStorage) GetUserLinks(ctx context.Context, user repositories.User)
 	return data, nil
 }
 
-func (st *PsqlStorage) Pool(ctx context.Context) bool {
+func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	return st.db.Ping(ctxLocal) == nil
+	ok = st.db.Ping(ctxLocal) == nil
+
+	return ok
 }
 
 func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
-		st.deleteCh <- repositories.LinkPendingDeletion{
-			ID:   id,
-			User: user,
-		}
+		st.deleteCh <- repositories.LinkPendingDeletion{ID: id, User: user}
 	}
+
 	return nil
+}
+
+func (st *PsqlStorage) doMigrate(dsn string) error {
+	m, err := migrate.New("file://migrations/postgres", dsn)
+	if err != nil {
+		return err
+	}
+
+	err = m.Up()
+	if errors.Is(err, migrate.ErrNoChange) {
+		return nil
+	}
+
+	return err
 }
 
 func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int, bufferTimeout time.Duration) {
@@ -191,12 +217,19 @@ func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int
 			continue
 		}
 
-		_, err := st.db.Exec(ctx,
+		ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+
+		_, err := st.db.Exec(
+			ctxLocal,
 			`UPDATE links SET deleted = TRUE 
              FROM (select unnest($1::text[]) as id, unnest($2::uuid[]) as user) as data_table
-             WHERE links.id = data_table.id AND user_id = data_table.user`, pq.Array(ids), pq.Array(users))
+             WHERE links.id = data_table.id AND user_id = data_table.user`,
+			pq.Array(ids), pq.Array(users),
+		)
 		if err != nil {
 			log.Printf("update failed: %v", err)
 		}
+
+		cancel()
 	}
 }

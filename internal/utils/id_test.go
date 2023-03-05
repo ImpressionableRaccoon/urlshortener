@@ -9,7 +9,7 @@ import (
 
 func TestGenRandomID(t *testing.T) {
 	got, err := GenRandomID()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, idLength, len(got))
 
@@ -21,6 +21,6 @@ func TestGenRandomID(t *testing.T) {
 func BenchmarkGenRandomID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := GenRandomID()
-		require.Nil(b, err)
+		require.NoError(b, err)
 	}
 }

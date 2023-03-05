@@ -11,16 +11,18 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
-type ShortenURLRequest struct {
-	URL string `json:"url"`
-}
+type (
+	ShortenURLRequest struct {
+		URL string `json:"url"`
+	}
 
-type ShortenURLResponse struct {
-	Result string `json:"result"`
-}
+	ShortenURLResponse struct {
+		Result string `json:"result"`
+	}
+)
 
 func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	b, err := io.ReadAll(r.Body)

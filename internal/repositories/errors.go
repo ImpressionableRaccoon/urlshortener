@@ -5,10 +5,10 @@ import (
 )
 
 var (
-	ErrURLNotFound      error = errors.New("URL not found")
-	ErrURLAlreadyExists error = errors.New("URL already exists")
-	ErrUnableParseUser  error = errors.New("unable parse user")
-	ErrUnableDecodeURL  error = errors.New("unable decode URL")
-	ErrLinkNotExists    error = errors.New("link not exists")
-	ErrUserNotMatch     error = errors.New("user not match")
+	ErrURLNotFound      = errors.New("URL not found")
+	ErrURLAlreadyExists = errors.New("URL already exists")
+	ErrUnableParseUser  = errors.New("unable parse user")
+	ErrUnableDecodeURL  = errors.New("unable decode URL")
+	ErrLinkNotExists    = errors.New("link not exists")
+	ErrUserNotMatch     = errors.New("user not match")
 )

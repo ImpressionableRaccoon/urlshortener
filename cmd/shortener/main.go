@@ -30,6 +30,7 @@ func main() {
 
 	go func() {
 		if cfg.PprofServerAddress == "" {
+			log.Println("pprof server address is empty, skipping")
 			return
 		}
 		err := http.ListenAndServe(cfg.PprofServerAddress, nil)

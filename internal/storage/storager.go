@@ -16,7 +16,7 @@ type Storager interface {
 	Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error)
 	GetUserLinks(ctx context.Context, user repositories.User) (links []repositories.UserLink, err error)
 	DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error
-	Pool(ctx context.Context) bool
+	Pool(ctx context.Context) (ok bool)
 }
 
 type StoragerType int

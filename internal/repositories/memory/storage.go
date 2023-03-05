@@ -24,7 +24,11 @@ func NewMemoryStorage() (*MemStorage, error) {
 	return st, nil
 }
 
-func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+func (st *MemStorage) Add(
+	ctx context.Context,
+	url repositories.URL,
+	user repositories.User,
+) (id repositories.ID, err error) {
 	return st.AddLink(url, user)
 }
 
@@ -44,6 +48,7 @@ func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id 
 			return "", err
 		}
 	}
+
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
 		User: user,
@@ -65,7 +70,10 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 	return "", false, repositories.ErrURLNotFound
 }
 
-func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+func (st *MemStorage) GetUserLinks(
+	ctx context.Context,
+	user repositories.User,
+) (data []repositories.UserLink, err error) {
 	st.RLock()
 	defer st.RUnlock()
 
@@ -86,10 +94,10 @@ func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) 
 		})
 	}
 
-	return
+	return data, nil
 }
 
-func (st *MemStorage) Pool(ctx context.Context) bool {
+func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
 	return true
 }
 
@@ -104,8 +112,10 @@ func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User)
 	if link.User != user {
 		return false
 	}
+
 	link.Deleted = true
 	st.IDLinkDataDictionary[id] = link
+
 	return true
 }
 
@@ -113,5 +123,6 @@ func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID
 	for _, id := range ids {
 		_ = st.DeleteUserLink(id, user)
 	}
+
 	return nil
 }

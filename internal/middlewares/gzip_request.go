@@ -15,6 +15,7 @@ func (m *Middlewares) GzipRequest(next http.Handler) http.Handler {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+
 			r.Body = gz
 			defer func(gz *gzip.Reader) {
 				err = gz.Close()

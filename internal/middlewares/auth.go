@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 func (m *Middlewares) UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("USER")
-		if err == http.ErrNoCookie || len(cookie.Value) < 16 {
+		if errors.Is(err, http.ErrNoCookie) || len(cookie.Value) < 16 {
 			m.setNewUser(next, w, r, m.createNewUser(w))
 			return
 		}
@@ -41,6 +42,7 @@ func (m *Middlewares) UserCookie(next http.Handler) http.Handler {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
+
 		m.setNewUser(next, w, r, user.String())
 	})
 }
