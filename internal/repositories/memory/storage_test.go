@@ -11,12 +11,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
+// TestLink - структура, которая содержит тестируемую ссылку.
 type TestLink struct {
-	URL    repositories.URL
-	ID     repositories.ID
-	Delete bool
+	URL    repositories.URL // Исходный URL.
+	ID     repositories.ID  // ID сокращенной ссылки.
+	Delete bool             // Удалена ли ссылка.
 }
 
+// TestMemoryStorage - тестируем MemStorage.
 func TestMemoryStorage(t *testing.T) {
 	st, err := NewMemoryStorage()
 	require.NoError(t, err)

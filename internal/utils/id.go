@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	idLength          = 5
+	allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" // Символы, которые могут быть в ID.
+	idLength          = 5                                                                // Длина генерируемого ID.
 )
 
+// GenRandomID - функция дли генерации случайного ID для ссылки.
 func GenRandomID() (string, error) {
 	allowedCharactersLength := big.NewInt(int64(len(allowedCharacters)))
 

@@ -1,3 +1,4 @@
+// Package postgres содержит хранилище интерфейса Storager для взаимодействия с базой данных Postgres.
 package postgres
 
 import (
@@ -25,11 +26,13 @@ const (
 	deleteBufferTimeout = time.Second
 )
 
+// PsqlStorage - структура для хранилища Postgres.
 type PsqlStorage struct {
 	db       *pgxpool.Pool
 	deleteCh chan repositories.LinkPendingDeletion
 }
 
+// NewPsqlStorage - конструктор для PsqlStorage.
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	st := &PsqlStorage{
 		deleteCh: make(chan repositories.LinkPendingDeletion),
@@ -60,6 +63,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	return st, nil
 }
 
+// Add - сократить ссылку.
 func (st *PsqlStorage) Add(
 	ctx context.Context,
 	url repositories.URL,
@@ -106,6 +110,7 @@ func (st *PsqlStorage) Add(
 	return id, nil
 }
 
+// Get - получить оригинальную ссылку по ID.
 func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
@@ -125,6 +130,7 @@ func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url reposit
 	return url, deleted, nil
 }
 
+// GetUserLinks - получить все ссылки пользователя.
 func (st *PsqlStorage) GetUserLinks(
 	ctx context.Context,
 	user repositories.User,
@@ -157,6 +163,16 @@ func (st *PsqlStorage) GetUserLinks(
 	return data, nil
 }
 
+// DeleteUserLinks - удалить ссылки пользователя.
+func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		st.deleteCh <- repositories.LinkPendingDeletion{ID: id, User: user}
+	}
+
+	return nil
+}
+
+// Pool - проверить соединение с базой данных.
 func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
@@ -164,14 +180,6 @@ func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 	ok = st.db.Ping(ctxLocal) == nil
 
 	return ok
-}
-
-func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	for _, id := range ids {
-		st.deleteCh <- repositories.LinkPendingDeletion{ID: id, User: user}
-	}
-
-	return nil
 }
 
 func (st *PsqlStorage) doMigrate(dsn string) error {

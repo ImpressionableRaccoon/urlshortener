@@ -1,3 +1,4 @@
+// Package configs хранит конфигурацию сервера.
 package configs
 
 import (
@@ -5,23 +6,27 @@ import (
 	"os"
 )
 
+// Config - структура для хранения конфигурации сервера.
 type Config struct {
-	ServerAddress      string
-	PprofServerAddress string
-	ServerBaseURL      string
-	FileStoragePath    string
-	DatabaseDSN        string
-	CookieKey          []byte
+	ServerAddress      string // Адрес сервера, по умолчанию ":8080".
+	PprofServerAddress string // Адрес сервера профилирования.
+	ServerBaseURL      string // URL сервера, по умолчанию "http://localhost:8080".
+	FileStoragePath    string // Путь для файлового хранилища.
+	DatabaseDSN        string // Адрес базы данных.
+	CookieKey          []byte // Ключ для подписи cookie.
 }
 
+// NewConfig - конструктор для Config, сам получит и запишет значения.
+//
+// Приоритет (меньше - приоритетнее):
+//  0. аргументы командной строки
+//  1. env-переменные
+//  2. константы из исходника
 func NewConfig() Config {
 	cfg := Config{
-		ServerAddress:      ":8080",
-		PprofServerAddress: "",
-		ServerBaseURL:      "http://localhost:8080",
-		FileStoragePath:    "",
-		DatabaseDSN:        "",
-		CookieKey:          []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
+		ServerAddress: ":8080",
+		ServerBaseURL: "http://localhost:8080",
+		CookieKey:     []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
 	}
 
 	loadEnv(&cfg)

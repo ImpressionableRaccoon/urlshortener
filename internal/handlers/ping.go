@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// PingDB - обработчик для проверки связи с хранилищем.
 func (h *Handler) PingDB(w http.ResponseWriter, r *http.Request) {
 	if !h.st.Pool(r.Context()) {
 		w.WriteHeader(http.StatusInternalServerError)

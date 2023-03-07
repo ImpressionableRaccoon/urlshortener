@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestGenRandomID - тестируем GenRandomID.
 func TestGenRandomID(t *testing.T) {
 	got, err := GenRandomID()
 	require.NoError(t, err)
@@ -18,6 +19,7 @@ func TestGenRandomID(t *testing.T) {
 	}
 }
 
+// BenchmarkGenRandomID - проверяем производительность GenRandomID.
 func BenchmarkGenRandomID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := GenRandomID()

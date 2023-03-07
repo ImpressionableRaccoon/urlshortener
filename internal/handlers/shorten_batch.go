@@ -14,17 +14,20 @@ import (
 type correlationID = string
 
 type (
+	// BatchRequest - структура запроса к ShortenBatch.
 	BatchRequest struct {
-		CorrelationID correlationID    `json:"correlation_id"`
-		OriginalURL   repositories.URL `json:"original_url"`
+		CorrelationID correlationID    `json:"correlation_id"` // Уникальный ID ссылки в текущем запросе.
+		OriginalURL   repositories.URL `json:"original_url"`   // Исходный URL.
 	}
 
+	// BatchResponse - структура ответа от ShortenBatch.
 	BatchResponse struct {
-		CorrelationID correlationID    `json:"correlation_id"`
-		ShortURL      repositories.URL `json:"short_url"`
+		CorrelationID correlationID    `json:"correlation_id"` // Уникальный ID ссылки в текущем запросе.
+		ShortURL      repositories.URL `json:"short_url"`      // Сокращенный URL.
 	}
 )
 
+// ShortenBatch - обработчик для создания пачки коротких ссылок через JSON POST body.
 func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil || len(b) == 0 {

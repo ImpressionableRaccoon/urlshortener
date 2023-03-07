@@ -1,3 +1,4 @@
+// Package routers хранит chi-роутеры для запросов пользователя.
 package routers
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 )
 
+// NewRouter создает новый роутер с нужными обработчиками и middleware.
 func NewRouter(handler *handlers.Handler, m middlewares.Middlewares) chi.Router {
 	r := chi.NewRouter()
 

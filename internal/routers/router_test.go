@@ -25,11 +25,12 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
+// TestLink - структура для хранения тестовой ссылки.
 type TestLink struct {
-	URL       repositories.URL
-	ShortLink repositories.URL
-	ID        repositories.ID
-	Delete    bool
+	URL       repositories.URL // Исходный URL.
+	ShortLink repositories.URL // Сокращенный URL.
+	ID        repositories.ID  // ID сокращенного URL.
+	Delete    bool             // Должна ли ссылка быть удаленной.
 }
 
 func testRequest(
@@ -107,6 +108,7 @@ func genTestLinks(count int) (res []TestLink, err error) {
 	return res, nil
 }
 
+// TestRouter - тесты для роутера NewRouter.
 func TestRouter(t *testing.T) {
 	cfg := configs.Config{
 		ServerAddress: ":31222",

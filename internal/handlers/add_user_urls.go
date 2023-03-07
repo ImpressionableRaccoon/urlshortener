@@ -9,11 +9,13 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
+// UserLink - структура ссылки, принадлежащей пользователю.
 type UserLink struct {
-	ShortURL    repositories.URL `json:"short_url"`
-	OriginalURL repositories.URL `json:"original_url"`
+	ShortURL    repositories.URL `json:"short_url"`    // Сокращенный URL.
+	OriginalURL repositories.URL `json:"original_url"` // Исходный URL.
 }
 
+// GetUserURLs - обработчик возвращающий все ссылки принадлежащие текущему пользователю.
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r)
 	if err != nil {

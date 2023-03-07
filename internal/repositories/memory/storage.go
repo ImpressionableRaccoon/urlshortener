@@ -1,3 +1,4 @@
+// Package memory содержит хранилище интерфейса Storager для хранения данных во временной памяти.
 package memory
 
 import (
@@ -9,12 +10,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
+// MemStorage - структура для хранилища во временной памяти.
 type MemStorage struct {
 	sync.RWMutex
 	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
 	ExistingURLs         map[repositories.URL]repositories.ID
 }
 
+// NewMemoryStorage - конструктор для MemStorage.
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
@@ -24,6 +27,7 @@ func NewMemoryStorage() (*MemStorage, error) {
 	return st, nil
 }
 
+// Add - адаптер для AddLink.
 func (st *MemStorage) Add(
 	ctx context.Context,
 	url repositories.URL,
@@ -32,6 +36,7 @@ func (st *MemStorage) Add(
 	return st.AddLink(url, user)
 }
 
+// AddLink - сократить ссылку.
 func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id repositories.ID, err error) {
 	st.Lock()
 	defer st.Unlock()
@@ -58,6 +63,7 @@ func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id 
 	return id, nil
 }
 
+// Get - получить оригинальную ссылку по ID.
 func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	st.RLock()
 	defer st.RUnlock()
@@ -70,6 +76,7 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 	return "", false, repositories.ErrURLNotFound
 }
 
+// GetUserLinks - получить все ссылки пользователя.
 func (st *MemStorage) GetUserLinks(
 	ctx context.Context,
 	user repositories.User,
@@ -97,10 +104,16 @@ func (st *MemStorage) GetUserLinks(
 	return data, nil
 }
 
-func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
-	return true
+// DeleteUserLinks - удалить ссылки пользователя.
+func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		_ = st.DeleteUserLink(id, user)
+	}
+
+	return nil
 }
 
+// DeleteUserLink - удалить ссылку пользователя.
 func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User) (ok bool) {
 	st.Lock()
 	defer st.Unlock()
@@ -119,10 +132,7 @@ func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User)
 	return true
 }
 
-func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	for _, id := range ids {
-		_ = st.DeleteUserLink(id, user)
-	}
-
-	return nil
+// Pool - проверить соединение с базой данных.
+func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
+	return true
 }

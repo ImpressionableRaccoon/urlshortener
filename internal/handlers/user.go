@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrValueIsNotString = errors.New("value is not string")
+	ErrValueIsNotString = errors.New("value is not string") // Значение не может быть преобразовано к типу string.
 )
 
 func getUser(r *http.Request) (user uuid.UUID, err error) {

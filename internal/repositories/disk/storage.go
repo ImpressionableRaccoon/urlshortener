@@ -1,3 +1,4 @@
+// Package disk содержит хранилище интерфейса Storager для взаимодействия с текстовым файлом.
 package disk
 
 import (
@@ -18,12 +19,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
 )
 
+// FileStorage - структура для хранилища в файле.
 type FileStorage struct {
 	memory.MemStorage
 	file      *os.File
 	fileMutex sync.Mutex
 }
 
+// NewFileStorage - конструктор для FileStorage.
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		file: file,
@@ -39,6 +42,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	return st, nil
 }
 
+// Add - адаптер для AddLink.
 func (st *FileStorage) Add(
 	ctx context.Context,
 	url repositories.URL,
@@ -53,6 +57,7 @@ func (st *FileStorage) Add(
 	return
 }
 
+// DeleteUserLinks - удалить ссылки пользователя.
 func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
 		ok := st.DeleteUserLink(id, user)
@@ -66,6 +71,9 @@ func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.I
 	return nil
 }
 
+// Close - закрыть файл.
+//
+// После этого хранилище перестанет работать на запись.
 func (st *FileStorage) Close() error {
 	return st.file.Close()
 }

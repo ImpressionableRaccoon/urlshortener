@@ -1,3 +1,4 @@
+// Package handlers хранит обработчики для http-запросов пользователя.
 package handlers
 
 import (
@@ -9,11 +10,13 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
+// Handler хранит обработчики для http-запросов пользователя.
 type Handler struct {
 	st  storage.Storager
 	cfg configs.Config
 }
 
+// NewHandler - конструктор для Handler.
 func NewHandler(s storage.Storager, cfg configs.Config) *Handler {
 	h := &Handler{
 		st:  s,

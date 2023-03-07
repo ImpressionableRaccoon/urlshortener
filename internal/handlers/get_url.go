@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// GetURL - обработчик, который переадресует короткую ссылку на исходный URL.
 func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "ID")
 	if id == "" {
