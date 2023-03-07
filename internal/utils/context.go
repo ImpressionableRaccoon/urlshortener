@@ -1,3 +1,4 @@
 package utils
 
-type ContextKey string // Тип для ключей значений в контексте.
+// ContextKey - тип для ключей значений в контексте.
+type ContextKey string
