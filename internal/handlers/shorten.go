@@ -11,6 +11,7 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
+// Типы, которые использует ShortenURL.
 type (
 	// ShortenURLRequest - структура запроса к ShortenURL.
 	ShortenURLRequest struct {

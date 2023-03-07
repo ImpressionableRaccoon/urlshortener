@@ -14,18 +14,18 @@ import (
 
 // Storager - интерфейс для хранилища.
 type Storager interface {
-	Add(
+	Add( // Сократить ссылку.
 		ctx context.Context, url repositories.URL, userID repositories.User,
-	) (id repositories.ID, err error) // Сократить ссылку.
-	Get(
+	) (id repositories.ID, err error)
+	Get( // Получить оригинальную ссылку по ID.
 		ctx context.Context, id repositories.ID,
-	) (url repositories.URL, deleted bool, err error) // Получить оригинальную ссылку по ID.
-	GetUserLinks(
+	) (url repositories.URL, deleted bool, err error)
+	GetUserLinks( // Получить все ссылки пользователя.
 		ctx context.Context, user repositories.User,
-	) (links []repositories.UserLink, err error) // Получить все ссылки пользователя.
-	DeleteUserLinks(
+	) (links []repositories.UserLink, err error)
+	DeleteUserLinks( // Удалить ссылки пользователя.
 		ctx context.Context, ids []repositories.ID, user repositories.User,
-	) error // Удалить ссылки пользователя.
+	) error
 	Pool(ctx context.Context) (ok bool) // Проверить соединение с базой данных.
 }
 

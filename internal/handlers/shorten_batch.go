@@ -11,8 +11,10 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
+// correlationID - уникальный ID ссылки для соотнесения блоков в запросе-ответе.
 type correlationID = string
 
+// Типы, которые использует ShortenBatch.
 type (
 	// BatchRequest - структура запроса к ShortenBatch.
 	BatchRequest struct {

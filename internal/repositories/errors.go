@@ -4,6 +4,7 @@ import (
 	"errors"
 )
 
+// Типы ошибок.
 var (
 	ErrURLNotFound      = errors.New("URL not found")      // Ссылки с таким ID не существует.
 	ErrURLAlreadyExists = errors.New("URL already exists") // Ссылка с таким исходным URL уже есть.
