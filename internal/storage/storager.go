@@ -32,6 +32,7 @@ type Storager interface {
 // StoragerType - int для хранения типа хранилища.
 type StoragerType int
 
+// Константы, которые определяют типы StoragerType.
 const (
 	MemoryStorage StoragerType = 1 << iota // Хранилище во временной памяти.
 	FileStorage                            // Хранилище в текстовом файле.
