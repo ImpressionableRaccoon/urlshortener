@@ -80,11 +80,11 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 func (st *MemStorage) GetUserLinks(
 	ctx context.Context,
 	user repositories.User,
-) (data []repositories.UserLink, err error) {
+) (data []repositories.LinkData, err error) {
 	st.RLock()
 	defer st.RUnlock()
 
-	data = make([]repositories.UserLink, 0)
+	data = make([]repositories.LinkData, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
 		if value.User != user {
@@ -95,9 +95,11 @@ func (st *MemStorage) GetUserLinks(
 			continue
 		}
 
-		data = append(data, repositories.UserLink{
-			ID:  id,
-			URL: value.URL,
+		data = append(data, repositories.LinkData{
+			ID:      id,
+			URL:     value.URL,
+			User:    user,
+			Deleted: false,
 		})
 	}
 

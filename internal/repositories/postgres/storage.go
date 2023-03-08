@@ -29,13 +29,13 @@ const (
 // PsqlStorage - структура для хранилища Postgres.
 type PsqlStorage struct {
 	db       *pgxpool.Pool
-	deleteCh chan repositories.LinkPendingDeletion
+	deleteCh chan repositories.LinkData
 }
 
 // NewPsqlStorage - конструктор для PsqlStorage.
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	st := &PsqlStorage{
-		deleteCh: make(chan repositories.LinkPendingDeletion),
+		deleteCh: make(chan repositories.LinkData),
 	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
@@ -134,7 +134,7 @@ func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url reposit
 func (st *PsqlStorage) GetUserLinks(
 	ctx context.Context,
 	user repositories.User,
-) (data []repositories.UserLink, err error) {
+) (data []repositories.LinkData, err error) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -148,10 +148,13 @@ func (st *PsqlStorage) GetUserLinks(
 		return nil, err
 	}
 
-	data = make([]repositories.UserLink, 0)
+	data = make([]repositories.LinkData, 0)
 
 	for rows.Next() {
-		link := repositories.UserLink{}
+		link := repositories.LinkData{
+			User:    user,
+			Deleted: false,
+		}
 		err = rows.Scan(&link.ID, &link.URL)
 		if err != nil {
 			log.Printf("row scan failed: %v", err)
@@ -166,7 +169,7 @@ func (st *PsqlStorage) GetUserLinks(
 // DeleteUserLinks - удалить ссылки пользователя.
 func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
-		st.deleteCh <- repositories.LinkPendingDeletion{ID: id, User: user}
+		st.deleteCh <- repositories.LinkData{ID: id, User: user}
 	}
 
 	return nil

@@ -22,7 +22,7 @@ type Storager interface {
 	) (url repositories.URL, deleted bool, err error)
 	GetUserLinks( // Получить все ссылки пользователя.
 		ctx context.Context, user repositories.User,
-	) (links []repositories.UserLink, err error)
+	) (links []repositories.LinkData, err error)
 	DeleteUserLinks( // Удалить ссылки пользователя.
 		ctx context.Context, ids []repositories.ID, user repositories.User,
 	) error

@@ -58,7 +58,7 @@ func TestMemoryStorage(t *testing.T) {
 		r, err := st.GetUserLinks(context.Background(), testUser)
 		require.NoError(t, err)
 		for _, link := range links {
-			assert.Contains(t, r, repositories.UserLink{ID: link.ID, URL: link.URL})
+			assert.Contains(t, r, repositories.LinkData{ID: link.ID, URL: link.URL, User: testUser, Deleted: false})
 		}
 	})
 
