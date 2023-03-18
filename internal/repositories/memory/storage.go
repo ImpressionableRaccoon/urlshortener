@@ -12,9 +12,9 @@ import (
 
 // MemStorage - структура для хранилища во временной памяти.
 type MemStorage struct {
-	sync.RWMutex
-	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
 	ExistingURLs         map[repositories.URL]repositories.ID
+	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
+	sync.RWMutex
 }
 
 // NewMemoryStorage - конструктор для MemStorage.
