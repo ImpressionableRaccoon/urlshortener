@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// GzipRequest - middleware для распаковки gzip-запросов от клиента.
 func (m *Middlewares) GzipRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
@@ -15,6 +16,7 @@ func (m *Middlewares) GzipRequest(next http.Handler) http.Handler {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+
 			r.Body = gz
 			defer func(gz *gzip.Reader) {
 				err = gz.Close()

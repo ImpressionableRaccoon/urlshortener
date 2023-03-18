@@ -11,16 +11,22 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
-type ShortenURLRequest struct {
-	URL string `json:"url"`
-}
+// Типы, которые использует ShortenURL.
+type (
+	// ShortenURLRequest - структура запроса к ShortenURL.
+	ShortenURLRequest struct {
+		URL string `json:"url"` // Исходный URL.
+	}
 
-type ShortenURLResponse struct {
-	Result string `json:"result"`
-}
+	// ShortenURLResponse - структура ответа от ShortenURL.
+	ShortenURLResponse struct {
+		Result string `json:"result"` // Сокращенный URL.
+	}
+)
 
+// ShortenURL - обработчик для создания короткой ссылки через JSON POST body.
 func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	b, err := io.ReadAll(r.Body)

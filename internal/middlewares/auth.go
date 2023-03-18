@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"time"
 
@@ -13,10 +14,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
+// UserCookie - middleware для аутентификации пользователя.
+//
+// Если пользователь обращается первый раз, то генерируем userID и передаем его в cookie.
+// Если у пользователя уже есть ID, то проверяем подпись.
 func (m *Middlewares) UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("USER")
-		if err == http.ErrNoCookie || len(cookie.Value) < 16 {
+		if errors.Is(err, http.ErrNoCookie) || len(cookie.Value) < 16 {
 			m.setNewUser(next, w, r, m.createNewUser(w))
 			return
 		}
@@ -41,15 +46,18 @@ func (m *Middlewares) UserCookie(next http.Handler) http.Handler {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
+
 		m.setNewUser(next, w, r, user.String())
 	})
 }
 
+// setNewUser добавляет userID в контекст и передает запрос следующему обработчику.
 func (m *Middlewares) setNewUser(next http.Handler, w http.ResponseWriter, r *http.Request, user string) {
 	ctx := context.WithValue(r.Context(), utils.ContextKey("userID"), user)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// createNewUser - генерирует пользователя, подписывает cookie и передает их клиенту.
 func (m *Middlewares) createNewUser(w http.ResponseWriter) string {
 	user := uuid.New()
 

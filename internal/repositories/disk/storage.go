@@ -1,9 +1,11 @@
+// Package disk содержит хранилище интерфейса Storager для взаимодействия с текстовым файлом.
 package disk
 
 import (
 	"bufio"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,12 +19,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories/memory"
 )
 
+// FileStorage - структура для хранилища в файле.
 type FileStorage struct {
 	memory.MemStorage
 	file      *os.File
 	fileMutex sync.Mutex
 }
 
+// NewFileStorage - конструктор для FileStorage.
 func NewFileStorage(file *os.File) (*FileStorage, error) {
 	st := &FileStorage{
 		file: file,
@@ -38,6 +42,42 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 	return st, nil
 }
 
+// Add - адаптер для AddLink.
+func (st *FileStorage) Add(
+	ctx context.Context,
+	url repositories.URL,
+	user repositories.User,
+) (id repositories.ID, err error) {
+	id, err = st.AddLink(url, user)
+	if err != nil {
+		return
+	}
+
+	err = st.write(fmt.Sprintf("NEW,%s,%s,%s", id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
+	return
+}
+
+// DeleteUserLinks - удалить ссылки пользователя.
+func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		ok := st.DeleteUserLink(id, user)
+		if ok {
+			err := st.write(fmt.Sprintf("DELETE,%s,%s", id, user.String()))
+			if err != nil {
+				log.Printf("unable to write delete: %v", err)
+			}
+		}
+	}
+	return nil
+}
+
+// Close - закрыть файл.
+//
+// После этого хранилище перестанет работать на запись.
+func (st *FileStorage) Close() error {
+	return st.file.Close()
+}
+
 func (st *FileStorage) load() error {
 	st.Lock()
 	defer st.Unlock()
@@ -47,7 +87,7 @@ func (st *FileStorage) load() error {
 	i := 0
 	for {
 		bytes, err := reader.ReadBytes('\n')
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -122,32 +162,9 @@ func (st *FileStorage) write(data string) error {
 	defer st.fileMutex.Unlock()
 
 	_, err := st.file.Write([]byte(data + "\n"))
-	return err
-}
-
-func (st *FileStorage) Close() error {
-	return st.file.Close()
-}
-
-func (st *FileStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
-	id, err = st.AddLink(url, user)
 	if err != nil {
-		return
+		return err
 	}
 
-	err = st.write(fmt.Sprintf("NEW,%s,%s,%s", id, user.String(), base64.StdEncoding.EncodeToString([]byte(url))))
-	return
-}
-
-func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	for _, id := range ids {
-		ok := st.DeleteUserLink(id, user)
-		if ok {
-			err := st.write(fmt.Sprintf("DELETE,%s,%s", id, user.String()))
-			if err != nil {
-				log.Printf("unable to write delete: %v", err)
-			}
-		}
-	}
 	return nil
 }

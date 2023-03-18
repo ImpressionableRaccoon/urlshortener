@@ -9,9 +9,8 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
-var (
-	ErrValueIsNotString error = errors.New("value is not string")
-)
+// ErrValueIsNotString - значение не может быть преобразовано к типу string.
+var ErrValueIsNotString = errors.New("value is not string")
 
 func getUser(r *http.Request) (user uuid.UUID, err error) {
 	userID, ok := r.Context().Value(utils.ContextKey("userID")).(string)

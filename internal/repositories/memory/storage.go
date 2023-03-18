@@ -1,3 +1,4 @@
+// Package memory содержит хранилище интерфейса Storager для хранения данных во временной памяти.
 package memory
 
 import (
@@ -9,12 +10,14 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
+// MemStorage - структура для хранилища во временной памяти.
 type MemStorage struct {
 	sync.RWMutex
 	IDLinkDataDictionary map[repositories.ID]repositories.LinkData
 	ExistingURLs         map[repositories.URL]repositories.ID
 }
 
+// NewMemoryStorage - конструктор для MemStorage.
 func NewMemoryStorage() (*MemStorage, error) {
 	st := &MemStorage{
 		IDLinkDataDictionary: make(map[repositories.ID]repositories.LinkData),
@@ -24,10 +27,16 @@ func NewMemoryStorage() (*MemStorage, error) {
 	return st, nil
 }
 
-func (st *MemStorage) Add(ctx context.Context, url repositories.URL, user repositories.User) (id repositories.ID, err error) {
+// Add - адаптер для AddLink.
+func (st *MemStorage) Add(
+	ctx context.Context,
+	url repositories.URL,
+	user repositories.User,
+) (id repositories.ID, err error) {
 	return st.AddLink(url, user)
 }
 
+// AddLink - сократить ссылку.
 func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id repositories.ID, err error) {
 	st.Lock()
 	defer st.Unlock()
@@ -44,6 +53,7 @@ func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id 
 			return "", err
 		}
 	}
+
 	st.IDLinkDataDictionary[id] = repositories.LinkData{
 		URL:  url,
 		User: user,
@@ -53,6 +63,7 @@ func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id 
 	return id, nil
 }
 
+// Get - получить оригинальную ссылку по ID.
 func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	st.RLock()
 	defer st.RUnlock()
@@ -65,11 +76,15 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 	return "", false, repositories.ErrURLNotFound
 }
 
-func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) (data []repositories.UserLink, err error) {
+// GetUserLinks - получить все ссылки пользователя.
+func (st *MemStorage) GetUserLinks(
+	ctx context.Context,
+	user repositories.User,
+) (data []repositories.LinkData, err error) {
 	st.RLock()
 	defer st.RUnlock()
 
-	data = make([]repositories.UserLink, 0)
+	data = make([]repositories.LinkData, 0)
 
 	for id, value := range st.IDLinkDataDictionary {
 		if value.User != user {
@@ -80,19 +95,27 @@ func (st *MemStorage) GetUserLinks(ctx context.Context, user repositories.User) 
 			continue
 		}
 
-		data = append(data, repositories.UserLink{
-			ID:  id,
-			URL: value.URL,
+		data = append(data, repositories.LinkData{
+			ID:      id,
+			URL:     value.URL,
+			User:    user,
+			Deleted: false,
 		})
 	}
 
-	return
+	return data, nil
 }
 
-func (st *MemStorage) Pool(ctx context.Context) bool {
-	return true
+// DeleteUserLinks - удалить ссылки пользователя.
+func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+	for _, id := range ids {
+		_ = st.DeleteUserLink(id, user)
+	}
+
+	return nil
 }
 
+// DeleteUserLink - удалить ссылку пользователя.
 func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User) (ok bool) {
 	st.Lock()
 	defer st.Unlock()
@@ -104,14 +127,14 @@ func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User)
 	if link.User != user {
 		return false
 	}
+
 	link.Deleted = true
 	st.IDLinkDataDictionary[id] = link
+
 	return true
 }
 
-func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
-	for _, id := range ids {
-		_ = st.DeleteUserLink(id, user)
-	}
-	return nil
+// Pool - проверить соединение с базой данных.
+func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
+	return true
 }

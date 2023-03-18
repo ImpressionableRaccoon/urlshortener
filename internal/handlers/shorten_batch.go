@@ -11,18 +11,25 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
+// correlationID - уникальный ID ссылки для соотнесения блоков в запросе-ответе.
 type correlationID = string
 
-type BatchRequest struct {
-	CorrelationID correlationID    `json:"correlation_id"`
-	OriginalURL   repositories.URL `json:"original_url"`
-}
+// Типы, которые использует ShortenBatch.
+type (
+	// BatchRequest - структура запроса к ShortenBatch.
+	BatchRequest struct {
+		CorrelationID correlationID    `json:"correlation_id"` // Уникальный ID ссылки в текущем запросе.
+		OriginalURL   repositories.URL `json:"original_url"`   // Исходный URL.
+	}
 
-type BatchResponse struct {
-	CorrelationID correlationID    `json:"correlation_id"`
-	ShortURL      repositories.URL `json:"short_url"`
-}
+	// BatchResponse - структура ответа от ShortenBatch.
+	BatchResponse struct {
+		CorrelationID correlationID    `json:"correlation_id"` // Уникальный ID ссылки в текущем запросе.
+		ShortURL      repositories.URL `json:"short_url"`      // Сокращенный URL.
+	}
+)
 
+// ShortenBatch - обработчик для создания пачки коротких ссылок через JSON POST body.
 func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil || len(b) == 0 {
@@ -66,7 +73,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(responseJSON)

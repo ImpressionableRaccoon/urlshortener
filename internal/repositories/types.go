@@ -4,24 +4,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// Типы, которые используем для хранения информации о ссылках.
 type (
-	ID   = string
-	URL  = string
-	User = uuid.UUID
+	ID      = string    // Тип для хранения ID сокращенной ссылки.
+	URL     = string    // Тип для хранения исходного URL.
+	User    = uuid.UUID // Тип для хранения ID пользователя.
+	Deleted = bool      // Тип для хранения, удалена ли ссылка.
 )
 
+// LinkData - структура для хранения данных о ссылке.
 type LinkData struct {
-	URL     URL
-	User    User
-	Deleted bool
-}
-
-type UserLink struct {
-	ID  ID
-	URL URL
-}
-
-type LinkPendingDeletion struct {
-	ID   ID
-	User User
+	ID      ID      // ID сокращенной ссылки.
+	URL     URL     // Исходный URL.
+	User    User    // Пользователь, которому принадлежит ссылка.
+	Deleted Deleted // Удалена ли ссылка.
 }
