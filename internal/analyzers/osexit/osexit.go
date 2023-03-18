@@ -9,6 +9,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// Analyzer - анализатор, который проверяет наличие os.Exit() в функции main пакета main
 var Analyzer = &analysis.Analyzer{
 	Name: "osexit",
 	Doc:  "check for using os.Exit() in func main",
