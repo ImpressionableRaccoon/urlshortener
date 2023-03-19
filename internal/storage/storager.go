@@ -34,9 +34,9 @@ type StoragerType int
 
 // Константы, которые определяют типы StoragerType.
 const (
-	MemoryStorage StoragerType = 1 << iota // Хранилище во временной памяти.
-	FileStorage                            // Хранилище в текстовом файле.
-	PsqlStorage                            // Хранилище в базе данных Postgres.
+	MemoryStorage StoragerType = iota // Хранилище во временной памяти.
+	FileStorage                       // Хранилище в текстовом файле.
+	PsqlStorage                       // Хранилище в базе данных Postgres.
 )
 
 // NewStorager - конструктор для хранилища.
@@ -46,13 +46,11 @@ const (
 //  1. FileStorage
 //  2. MemoryStorage
 func NewStorager(cfg configs.Config) (Storager, error) {
-	var err error
 	switch getStoragerType(cfg) {
 	case PsqlStorage:
 		return postgres.NewPsqlStorage(cfg.DatabaseDSN)
 	case FileStorage:
-		var file *os.File
-		file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
+		file, err := os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
 		if err != nil {
 			return nil, err
 		}
