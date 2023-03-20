@@ -12,7 +12,15 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	printInfo()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	cfg := configs.NewConfig()
@@ -40,4 +48,10 @@ func main() {
 	}()
 
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+}
+
+func printInfo() {
+	log.Printf("Build version: %s", buildVersion)
+	log.Printf("Build date: %s", buildDate)
+	log.Printf("Build commit: %s", buildCommit)
 }

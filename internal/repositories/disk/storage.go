@@ -21,8 +21,8 @@ import (
 
 // FileStorage - структура для хранилища в файле.
 type FileStorage struct {
+	file *os.File
 	memory.MemStorage
-	file      *os.File
 	fileMutex sync.Mutex
 }
 
