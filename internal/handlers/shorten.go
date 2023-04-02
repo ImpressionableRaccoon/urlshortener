@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -58,7 +57,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := &ShortenURLResponse{
-		Result: fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id),
+		Result: h.genShortLink(id),
 	}
 
 	responseJSON, err := json.Marshal(response)

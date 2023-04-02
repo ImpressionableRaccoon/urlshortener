@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -62,7 +61,7 @@ func (h *Handler) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 		response = append(response, BatchResponse{
 			CorrelationID: link.CorrelationID,
-			ShortURL:      fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id),
+			ShortURL:      h.genShortLink(id),
 		})
 	}
 

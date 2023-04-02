@@ -50,7 +50,7 @@ func NewStorager(cfg configs.Config) (Storager, error) {
 	case PsqlStorage:
 		return postgres.NewPsqlStorage(cfg.DatabaseDSN)
 	case FileStorage:
-		file, err := os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
+		file, err := os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0o777)
 		if err != nil {
 			return nil, err
 		}

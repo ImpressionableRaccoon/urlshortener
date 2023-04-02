@@ -14,6 +14,8 @@ type Config struct {
 	FileStoragePath    string // Путь для файлового хранилища.
 	DatabaseDSN        string // Адрес базы данных.
 	CookieKey          []byte // Ключ для подписи cookie.
+	EnableHTTPS        bool   // Используем ли HTTPS (на 443 порту)
+	HTTPSDomain        string // Домен при использовании HTTPS
 }
 
 // NewConfig - конструктор для Config, сам получит и запишет значения.
@@ -51,6 +53,14 @@ func loadEnv(cfg *Config) {
 	if s, ok := os.LookupEnv("DATABASE_DSN"); ok {
 		cfg.DatabaseDSN = s
 	}
+
+	if _, ok := os.LookupEnv("ENABLE_HTTPS"); ok {
+		cfg.EnableHTTPS = true
+	}
+
+	if s, ok := os.LookupEnv("HTTPS_DOMAIN"); ok {
+		cfg.HTTPSDomain = s
+	}
 }
 
 func loadArgs(cfg *Config) {
@@ -58,6 +68,8 @@ func loadArgs(cfg *Config) {
 	flag.StringVar(&cfg.ServerBaseURL, "b", cfg.ServerBaseURL, "server base url")
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
+	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "enable https support")
+	flag.StringVar(&cfg.HTTPSDomain, "https-domain", cfg.HTTPSDomain, "HTTPS domain name")
 
 	flag.Parse()
 }

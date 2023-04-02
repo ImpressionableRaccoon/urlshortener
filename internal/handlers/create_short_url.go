@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -36,7 +35,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id)
+	url := h.genShortLink(id)
 
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(url))

@@ -25,7 +25,7 @@ func TestFileStorage(t *testing.T) {
 
 	filename := "testingStorage"
 
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o777)
 	require.NoError(t, err)
 
 	st, err := NewFileStorage(file)
@@ -102,7 +102,7 @@ func TestFileStorage(t *testing.T) {
 	err = st.Close()
 	require.NoError(t, err)
 
-	file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
+	file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o777)
 	require.NoError(t, err)
 
 	st, err = NewFileStorage(file)

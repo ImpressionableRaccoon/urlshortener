@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
@@ -47,7 +50,14 @@ func main() {
 		}
 	}()
 
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+	if cfg.EnableHTTPS {
+		if cfg.HTTPSDomain == "" {
+			panic(errors.New("empty HTTPS domain name"))
+		}
+		panic(http.Serve(autocert.NewListener(cfg.HTTPSDomain), r))
+	} else {
+		panic(http.ListenAndServe(cfg.ServerAddress, r))
+	}
 }
 
 func printInfo() {
