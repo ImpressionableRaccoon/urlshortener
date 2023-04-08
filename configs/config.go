@@ -129,7 +129,7 @@ func (cfg *Config) loadJSON() {
 	if cfg.DatabaseDSN == "" {
 		cfg.DatabaseDSN = c.DatabaseDSN
 	}
-	if cfg.EnableHTTPS == false {
+	if !cfg.EnableHTTPS {
 		cfg.EnableHTTPS = c.EnableHTTPS
 	}
 }
