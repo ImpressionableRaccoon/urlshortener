@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -24,18 +25,22 @@ import (
 const (
 	deleteBufferSize    = 100
 	deleteBufferTimeout = time.Second
+	shutdownTimeout     = 15 * time.Second
 )
 
 // PsqlStorage - структура для хранилища Postgres.
 type PsqlStorage struct {
-	db       *pgxpool.Pool
-	deleteCh chan repositories.LinkData
+	db             *pgxpool.Pool
+	deleteCh       chan repositories.LinkData
+	deleteWg       sync.WaitGroup
+	deleteShutdown chan struct{}
 }
 
 // NewPsqlStorage - конструктор для PsqlStorage.
 func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 	st := &PsqlStorage{
-		deleteCh: make(chan repositories.LinkData),
+		deleteCh:       make(chan repositories.LinkData),
+		deleteShutdown: make(chan struct{}),
 	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
@@ -58,6 +63,7 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		return nil, err
 	}
 
+	st.deleteWg.Add(1)
 	go st.deleteUserLinksWorker(context.Background(), deleteBufferSize, deleteBufferTimeout)
 
 	return st, nil
@@ -185,6 +191,26 @@ func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 	return ok
 }
 
+// Close - мягко завершить работу хранилища.
+func (st *PsqlStorage) Close(ctx context.Context) error {
+	close(st.deleteShutdown)
+
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		st.deleteWg.Wait()
+	}()
+	select {
+	case <-c:
+	case <-time.After(shutdownTimeout):
+		log.Print("storage close timeout exceed")
+	}
+
+	st.db.Close()
+
+	return nil
+}
+
 func (st *PsqlStorage) doMigrate(dsn string) error {
 	m, err := migrate.New("file://migrations/postgres", dsn)
 	if err != nil {
@@ -203,7 +229,14 @@ func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int
 	ids := make([]repositories.ID, 0, bufferSize)
 	users := make([]repositories.User, 0, bufferSize)
 
+worker:
 	for {
+		select {
+		case <-st.deleteShutdown:
+			break worker
+		default:
+		}
+
 		ids = ids[:0]
 		users = users[:0]
 
@@ -220,6 +253,10 @@ func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int
 					break loop
 				}
 			case <-timeoutCtx.Done():
+				timeoutCancel()
+				break loop
+			case <-st.deleteShutdown:
+				timeoutCancel()
 				break loop
 			}
 		}
@@ -243,4 +280,6 @@ func (st *PsqlStorage) deleteUserLinksWorker(ctx context.Context, bufferSize int
 
 		cancel()
 	}
+
+	st.deleteWg.Done()
 }

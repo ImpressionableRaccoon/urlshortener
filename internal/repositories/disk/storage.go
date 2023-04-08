@@ -71,10 +71,8 @@ func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.I
 	return nil
 }
 
-// Close - закрыть файл.
-//
-// После этого хранилище перестанет работать на запись.
-func (st *FileStorage) Close() error {
+// Close - мягко завершить работу хранилища.
+func (st *FileStorage) Close(ctx context.Context) error {
 	return st.file.Close()
 }
 

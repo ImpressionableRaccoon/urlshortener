@@ -26,7 +26,8 @@ type Storager interface {
 	DeleteUserLinks( // Удалить ссылки пользователя.
 		ctx context.Context, ids []repositories.ID, user repositories.User,
 	) error
-	Pool(ctx context.Context) (ok bool) // Проверить соединение с базой данных.
+	Pool(ctx context.Context) (ok bool)    // Проверить соединение с базой данных.
+	Close(ctx context.Context) (err error) // Мягко завершить работу хранилища
 }
 
 // StoragerType - int для хранения типа хранилища.

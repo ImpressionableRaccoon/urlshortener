@@ -99,7 +99,7 @@ func TestFileStorage(t *testing.T) {
 		}
 	})
 
-	err = st.Close()
+	err = st.Close(context.Background())
 	require.NoError(t, err)
 
 	file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o777)
@@ -119,7 +119,7 @@ func TestFileStorage(t *testing.T) {
 		}
 	})
 
-	err = st.Close()
+	err = st.Close(context.Background())
 	require.NoError(t, err)
 
 	err = os.Remove(filename)
