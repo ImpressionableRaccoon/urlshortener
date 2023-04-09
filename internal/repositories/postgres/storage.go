@@ -146,6 +146,10 @@ func (st *PsqlStorage) GetUserLinks(
 		log.Printf("query failed: %v", err)
 		return nil, err
 	}
+	if rows.Err() != nil {
+		log.Printf("rows failed: %v", err)
+		return nil, err
+	}
 
 	data = make([]repositories.LinkData, 0)
 
@@ -166,7 +170,7 @@ func (st *PsqlStorage) GetUserLinks(
 }
 
 // DeleteUserLinks - удалить ссылки пользователя.
-func (st *PsqlStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+func (st *PsqlStorage) DeleteUserLinks(_ context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
 		st.deleteCh <- repositories.LinkData{ID: id, User: user}
 	}
@@ -183,7 +187,7 @@ func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 }
 
 // Close - мягко завершить работу хранилища.
-func (st *PsqlStorage) Close(ctx context.Context) error {
+func (st *PsqlStorage) Close(_ context.Context) error {
 	close(st.deleteShutdown)
 
 	c := make(chan struct{})
