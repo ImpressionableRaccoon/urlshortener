@@ -5,8 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/jackc/pgerrcode"
-	"github.com/lib/pq"
 	"log"
 	"sync"
 	"time"
@@ -14,7 +12,8 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgerrcode"
+	"github.com/lib/pq"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
