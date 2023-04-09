@@ -3,7 +3,10 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"github.com/jackc/pgerrcode"
+	"github.com/lib/pq"
 	"log"
 	"sync"
 	"time"
@@ -11,12 +14,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lib/pq"
-	pgxUUID "github.com/vgarvardt/pgx-google-uuid/v5"
+	_ "github.com/lib/pq"
 
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
@@ -30,7 +28,7 @@ const (
 
 // PsqlStorage - структура для хранилища Postgres.
 type PsqlStorage struct {
-	db             *pgxpool.Pool
+	db             *sql.DB
 	deleteCh       chan repositories.LinkData
 	deleteWg       sync.WaitGroup
 	deleteShutdown chan struct{}
@@ -43,17 +41,8 @@ func NewPsqlStorage(dsn string) (*PsqlStorage, error) {
 		deleteShutdown: make(chan struct{}),
 	}
 
-	poolConfig, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	poolConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		pgxUUID.Register(conn.TypeMap())
-		return nil
-	}
-
-	st.db, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
+	var err error
+	st.db, err = sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +67,6 @@ func (st *PsqlStorage) Add(
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	var res pgconn.CommandTag
-
 	for {
 		id, err = utils.GenRandomID()
 		if err != nil {
@@ -87,15 +74,16 @@ func (st *PsqlStorage) Add(
 			return "", err
 		}
 
-		res, err = st.db.Exec(
+		var res sql.Result
+		res, err = st.db.ExecContext(
 			ctxLocal,
 			`INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
 			id, url, userID,
 		)
 
-		var pgErr *pgconn.PgError
+		var pgErr *pq.Error
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			row := st.db.QueryRow(ctxLocal, `SELECT id FROM links WHERE url = $1`, url)
+			row := st.db.QueryRowContext(ctxLocal, `SELECT id FROM links WHERE url = $1`, url)
 			err = row.Scan(&id)
 			if err != nil {
 				log.Printf("query failed: %v", err)
@@ -108,7 +96,13 @@ func (st *PsqlStorage) Add(
 			return "", err
 		}
 
-		if res.RowsAffected() == 1 {
+		var aff int64
+		aff, err = res.RowsAffected()
+		if err != nil {
+			return id, err
+		}
+
+		if aff == 1 {
 			break
 		}
 	}
@@ -121,7 +115,7 @@ func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url reposit
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	row := st.db.QueryRow(
+	row := st.db.QueryRowContext(
 		ctxLocal,
 		`SELECT url, deleted FROM links WHERE id = $1`,
 		id,
@@ -144,7 +138,7 @@ func (st *PsqlStorage) GetUserLinks(
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	rows, err := st.db.Query(
+	rows, err := st.db.QueryContext(
 		ctxLocal,
 		`SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`,
 		user,
@@ -186,9 +180,7 @@ func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
 	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	ok = st.db.Ping(ctxLocal) == nil
-
-	return ok
+	return st.db.PingContext(ctxLocal) == nil
 }
 
 // Close - мягко завершить работу хранилища.
@@ -206,9 +198,7 @@ func (st *PsqlStorage) Close(ctx context.Context) error {
 		log.Print("storage close timeout exceed")
 	}
 
-	st.db.Close()
-
-	return nil
+	return st.db.Close()
 }
 
 func (st *PsqlStorage) doMigrate(dsn string) error {
@@ -267,7 +257,7 @@ worker:
 
 		ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
 
-		_, err := st.db.Exec(
+		_, err := st.db.ExecContext(
 			ctxLocal,
 			`UPDATE links SET deleted = TRUE 
              FROM (select unnest($1::text[]) as id, unnest($2::uuid[]) as user) as data_table
