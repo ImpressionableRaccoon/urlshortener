@@ -138,3 +138,8 @@ func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User)
 func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
 	return true
 }
+
+// Close - мягко завершить работу хранилища.
+func (st *MemStorage) Close(ctx context.Context) error {
+	return nil
+}

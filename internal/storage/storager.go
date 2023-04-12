@@ -26,7 +26,8 @@ type Storager interface {
 	DeleteUserLinks( // Удалить ссылки пользователя.
 		ctx context.Context, ids []repositories.ID, user repositories.User,
 	) error
-	Pool(ctx context.Context) (ok bool) // Проверить соединение с базой данных.
+	Pool(ctx context.Context) (ok bool)    // Проверить соединение с базой данных.
+	Close(ctx context.Context) (err error) // Мягко завершить работу хранилища
 }
 
 // StoragerType - int для хранения типа хранилища.
@@ -50,7 +51,7 @@ func NewStorager(cfg configs.Config) (Storager, error) {
 	case PsqlStorage:
 		return postgres.NewPsqlStorage(cfg.DatabaseDSN)
 	case FileStorage:
-		file, err := os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0777)
+		file, err := os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0o777)
 		if err != nil {
 			return nil, err
 		}

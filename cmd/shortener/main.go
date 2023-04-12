@@ -1,9 +1,17 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
@@ -19,6 +27,11 @@ var (
 )
 
 func main() {
+	shutdown := make(chan struct{})
+
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
 	printInfo()
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -41,13 +54,54 @@ func main() {
 			log.Println("pprof server address is empty, skipping")
 			return
 		}
+
 		err := http.ListenAndServe(cfg.PprofServerAddress, nil)
 		if err != nil {
 			log.Printf("pprof server error: %s\n", err)
 		}
 	}()
 
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+	srv := http.Server{
+		Handler: r,
+	}
+
+	var ln net.Listener
+	if cfg.EnableHTTPS {
+		if cfg.HTTPSDomain == "" {
+			panic(errors.New("empty HTTPS domain name"))
+		}
+		ln = autocert.NewListener(cfg.HTTPSDomain)
+	} else {
+		ln, err = net.Listen("tcp", cfg.ServerAddress)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	go func() {
+		<-sigint
+
+		err := srv.Shutdown(context.Background())
+		if err != nil {
+			log.Printf("error shutdown server: %v", err)
+		}
+
+		err = s.Close(context.Background())
+		if err != nil {
+			log.Printf("error close storage: %v", err)
+		}
+
+		close(shutdown)
+	}()
+
+	err = srv.Serve(ln)
+	if err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	<-shutdown
+
+	log.Print("shutdown successful")
 }
 
 func printInfo() {

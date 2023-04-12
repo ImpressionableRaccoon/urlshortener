@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -33,7 +32,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	response := make([]UserLink, 0)
 	for _, link := range links {
 		response = append(response, UserLink{
-			ShortURL:    fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, link.ID),
+			ShortURL:    h.genShortLink(link.ID),
 			OriginalURL: link.URL,
 		})
 	}

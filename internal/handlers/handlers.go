@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -37,4 +38,11 @@ func (h *Handler) httpJSONError(w http.ResponseWriter, error string, code int) {
 	if err != nil {
 		log.Printf("write failed: %v", err)
 	}
+}
+
+func (h *Handler) genShortLink(id string) string {
+	if h.cfg.EnableHTTPS {
+		return fmt.Sprintf("https://%s/%s", h.cfg.HTTPSDomain, id)
+	}
+	return fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id)
 }
