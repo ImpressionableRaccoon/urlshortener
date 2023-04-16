@@ -29,7 +29,7 @@ func NewMemoryStorage() (*MemStorage, error) {
 
 // Add - адаптер для AddLink.
 func (st *MemStorage) Add(
-	ctx context.Context,
+	_ context.Context,
 	url repositories.URL,
 	user repositories.User,
 ) (id repositories.ID, err error) {
@@ -64,7 +64,7 @@ func (st *MemStorage) AddLink(url repositories.URL, user repositories.User) (id 
 }
 
 // Get - получить оригинальную ссылку по ID.
-func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
+func (st *MemStorage) Get(_ context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
 	st.RLock()
 	defer st.RUnlock()
 
@@ -78,7 +78,7 @@ func (st *MemStorage) Get(ctx context.Context, id repositories.ID) (url reposito
 
 // GetUserLinks - получить все ссылки пользователя.
 func (st *MemStorage) GetUserLinks(
-	ctx context.Context,
+	_ context.Context,
 	user repositories.User,
 ) (data []repositories.LinkData, err error) {
 	st.RLock()
@@ -107,7 +107,7 @@ func (st *MemStorage) GetUserLinks(
 }
 
 // DeleteUserLinks - удалить ссылки пользователя.
-func (st *MemStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+func (st *MemStorage) DeleteUserLinks(_ context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
 		_ = st.DeleteUserLink(id, user)
 	}
@@ -134,12 +134,29 @@ func (st *MemStorage) DeleteUserLink(id repositories.ID, user repositories.User)
 	return true
 }
 
+// GetStats - получить статистику сервиса.
+func (st *MemStorage) GetStats(_ context.Context) (repositories.ServiceStats, error) {
+	st.RLock()
+	defer st.RUnlock()
+
+	users := make(map[repositories.User]bool)
+
+	for _, v := range st.IDLinkDataDictionary {
+		users[v.User] = true
+	}
+
+	return repositories.ServiceStats{
+		URLs:  uint64(len(st.IDLinkDataDictionary)),
+		Users: uint64(len(users)),
+	}, nil
+}
+
 // Pool - проверить соединение с базой данных.
-func (st *MemStorage) Pool(ctx context.Context) (ok bool) {
+func (st *MemStorage) Pool(_ context.Context) (ok bool) {
 	return true
 }
 
 // Close - мягко завершить работу хранилища.
-func (st *MemStorage) Close(ctx context.Context) error {
+func (st *MemStorage) Close(_ context.Context) error {
 	return nil
 }
