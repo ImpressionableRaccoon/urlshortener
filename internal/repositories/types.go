@@ -19,3 +19,9 @@ type LinkData struct {
 	User    User    // Пользователь, которому принадлежит ссылка.
 	Deleted Deleted // Удалена ли ссылка.
 }
+
+// ServiceStats - структура для хранения статистики сервиса.
+type ServiceStats struct {
+	URLs  uint64 `json:"urls"`  // Количество сокращённых URL в сервисе.
+	Users uint64 `json:"users"` // Количество пользователей в сервисе.
+}

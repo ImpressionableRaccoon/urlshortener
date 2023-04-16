@@ -38,6 +38,10 @@ func NewRouter(handler *handlers.Handler, m middlewares.Middlewares) chi.Router 
 				r.Get("/urls", handler.GetUserURLs)
 				r.Delete("/urls", handler.DeleteUserURLs)
 			})
+
+			r.Route("/internal", func(r chi.Router) {
+				r.Get("/stats", handler.GetStats)
+			})
 		})
 	})
 

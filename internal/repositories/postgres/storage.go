@@ -63,7 +63,7 @@ func (st *PsqlStorage) Add(
 	url repositories.URL,
 	userID repositories.User,
 ) (id repositories.ID, err error) {
-	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	for {
@@ -75,14 +75,14 @@ func (st *PsqlStorage) Add(
 
 		var res sql.Result
 		res, err = st.db.ExecContext(
-			ctxLocal,
+			ctx,
 			`INSERT INTO links (id, url, user_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
 			id, url, userID,
 		)
 
 		var pgErr *pq.Error
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			row := st.db.QueryRowContext(ctxLocal, `SELECT id FROM links WHERE url = $1`, url)
+			row := st.db.QueryRowContext(ctx, `SELECT id FROM links WHERE url = $1`, url)
 			err = row.Scan(&id)
 			if err != nil {
 				log.Printf("query failed: %v", err)
@@ -111,11 +111,11 @@ func (st *PsqlStorage) Add(
 
 // Get - получить оригинальную ссылку по ID.
 func (st *PsqlStorage) Get(ctx context.Context, id repositories.ID) (url repositories.URL, deleted bool, err error) {
-	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	row := st.db.QueryRowContext(
-		ctxLocal,
+		ctx,
 		`SELECT url, deleted FROM links WHERE id = $1`,
 		id,
 	)
@@ -134,11 +134,11 @@ func (st *PsqlStorage) GetUserLinks(
 	ctx context.Context,
 	user repositories.User,
 ) (data []repositories.LinkData, err error) {
-	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	rows, err := st.db.QueryContext(
-		ctxLocal,
+		ctx,
 		`SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`,
 		user,
 	)
@@ -178,12 +178,32 @@ func (st *PsqlStorage) DeleteUserLinks(_ context.Context, ids []repositories.ID,
 	return nil
 }
 
-// Pool - проверить соединение с базой данных.
-func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
-	ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+// GetStats - получить статистику сервиса.
+func (st *PsqlStorage) GetStats(ctx context.Context) (repositories.ServiceStats, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	return st.db.PingContext(ctxLocal) == nil
+	stats := repositories.ServiceStats{}
+
+	row := st.db.QueryRowContext(ctx,
+		`SELECT COUNT(id) AS links_count, COUNT(DISTINCT user_id) AS users_count FROM links`,
+	)
+
+	err := row.Scan(&stats.URLs, &stats.Users)
+	if err != nil {
+		log.Printf("query failed: %v", err)
+		return stats, err
+	}
+
+	return stats, nil
+}
+
+// Pool - проверить соединение с базой данных.
+func (st *PsqlStorage) Pool(ctx context.Context) (ok bool) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	return st.db.PingContext(ctx) == nil
 }
 
 // Close - мягко завершить работу хранилища.
@@ -258,7 +278,7 @@ worker:
 			continue
 		}
 
-		ctxLocal, cancel := context.WithTimeout(ctx, time.Second*10)
+		ctxLocal, cancelLocal := context.WithTimeout(ctx, time.Second*10)
 
 		_, err := st.db.ExecContext(
 			ctxLocal,
@@ -271,7 +291,7 @@ worker:
 			log.Printf("update failed: %v", err)
 		}
 
-		cancel()
+		cancelLocal()
 	}
 
 	st.deleteWg.Done()

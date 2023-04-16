@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -129,6 +130,10 @@ func TestRouter(t *testing.T) {
 		ServerAddress: ":31222",
 		ServerBaseURL: "http://localhost:31222",
 		CookieKey:     []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+		TrustedSubnet: &net.IPNet{
+			IP:   net.IP{127, 0, 0, 1},
+			Mask: net.IPMask{255, 255, 255, 255},
+		},
 	}
 
 	s, err := storage.NewStorager(cfg)
@@ -271,6 +276,23 @@ func TestRouter(t *testing.T) {
 			assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
 			assert.Equal(t, link.URL, header.Get("Location"))
 		}
+	})
+
+	t.Run("GET /api/internal/stats: get stats", func(t *testing.T) {
+		stats := repositories.ServiceStats{
+			URLs:  10,
+			Users: 1,
+		}
+		expected, err := json.Marshal(stats)
+		require.NoError(t, err)
+
+		statusCode, body, _ := testRequest(
+			t, ts, jar, http.MethodGet, "/api/internal/stats",
+			nil, nil,
+		)
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.JSONEq(t, string(expected), string(body))
 	})
 
 	shortenLinks, err := genTestLinks(10)

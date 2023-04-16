@@ -44,7 +44,7 @@ func NewFileStorage(file *os.File) (*FileStorage, error) {
 
 // Add - адаптер для AddLink.
 func (st *FileStorage) Add(
-	ctx context.Context,
+	_ context.Context,
 	url repositories.URL,
 	user repositories.User,
 ) (id repositories.ID, err error) {
@@ -58,7 +58,7 @@ func (st *FileStorage) Add(
 }
 
 // DeleteUserLinks - удалить ссылки пользователя.
-func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.ID, user repositories.User) error {
+func (st *FileStorage) DeleteUserLinks(_ context.Context, ids []repositories.ID, user repositories.User) error {
 	for _, id := range ids {
 		ok := st.DeleteUserLink(id, user)
 		if ok {
@@ -72,7 +72,7 @@ func (st *FileStorage) DeleteUserLinks(ctx context.Context, ids []repositories.I
 }
 
 // Close - мягко завершить работу хранилища.
-func (st *FileStorage) Close(ctx context.Context) error {
+func (st *FileStorage) Close(_ context.Context) error {
 	return st.file.Close()
 }
 
