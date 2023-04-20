@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package urlshortener;
+
+option go_package = "github.com/ImpressionableRaccoon/urlshortener";
+
+import "google/protobuf/empty.proto";
+
+message Link {
+  string id = 1;
+  string url = 2;
+  string short_url = 3;
+  string correlation_id = 4;
+}
+
+message Batch {
+  repeated Link data = 1;
+}
+
+message Statistic {
+  uint64 links = 1;
+  uint64 users = 2;
+}
+
+service Shortener {
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Short(Link) returns (Link);
+  rpc Get(Link) returns (Link);
+  rpc GetLinks(google.protobuf.Empty) returns (Batch);
+  rpc BatchShort(Batch) returns (Batch);
+  rpc Delete(Batch) returns (google.protobuf.Empty);
+  rpc GetStats(google.protobuf.Empty) returns (Statistic);
+}

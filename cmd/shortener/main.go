@@ -12,13 +12,17 @@ import (
 	"syscall"
 
 	"golang.org/x/crypto/acme/autocert"
+	"google.golang.org/grpc"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/grpc/interceptors"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/grpc/shortener"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
+	pb "github.com/ImpressionableRaccoon/urlshortener/proto"
 )
 
 var (
@@ -45,11 +49,8 @@ func main() {
 	}
 
 	h := handlers.NewHandler(s, cfg)
-
 	a := authenticator.New(cfg)
-
 	m := middlewares.NewMiddlewares(cfg, a)
-
 	r := routers.NewRouter(h, m)
 
 	go func() {
@@ -61,6 +62,23 @@ func main() {
 		err := http.ListenAndServe(cfg.PprofServerAddress, nil)
 		if err != nil {
 			log.Printf("pprof server error: %s\n", err)
+		}
+	}()
+
+	go func() {
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			log.Printf("listen grpc port error: %s\n", err)
+			return
+		}
+
+		i := interceptors.New(a)
+		g := grpc.NewServer(grpc.UnaryInterceptor(i.AuthUnaryInterceptor))
+		pb.RegisterShortenerServer(g, shortener.NewGRPCServer(cfg, s))
+
+		if err := g.Serve(listen); err != nil {
+			log.Printf("gRPC server error: %s\n", err)
+			return
 		}
 	}()
 

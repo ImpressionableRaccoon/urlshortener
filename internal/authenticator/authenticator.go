@@ -1,4 +1,4 @@
-// Пакет authenticator хранит реализацию аутентификации пользователя.
+// Package authenticator хранит реализацию аутентификации пользователя.
 package authenticator
 
 import (
