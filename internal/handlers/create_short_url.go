@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
@@ -20,7 +21,7 @@ func (h *Handler) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := getUser(r)
+	user, err := authenticator.GetUser(r.Context())
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)
