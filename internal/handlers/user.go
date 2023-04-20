@@ -9,13 +9,13 @@ import (
 	"github.com/ImpressionableRaccoon/urlshortener/internal/utils"
 )
 
-// ErrValueIsNotString - значение не может быть преобразовано к типу string.
-var ErrValueIsNotString = errors.New("value is not string")
+// ErrValueIsNotUUID - значение не может быть преобразовано к типу uuid.UUID.
+var ErrValueIsNotUUID = errors.New("value is not uuid.UUID")
 
 func getUser(r *http.Request) (user uuid.UUID, err error) {
-	userID, ok := r.Context().Value(utils.ContextKey("userID")).(string)
+	user, ok := r.Context().Value(utils.ContextKey("userID")).(uuid.UUID)
 	if !ok {
-		return uuid.Nil, ErrValueIsNotString
+		return uuid.Nil, ErrValueIsNotUUID
 	}
-	return uuid.Parse(userID)
+	return
 }

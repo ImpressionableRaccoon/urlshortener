@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
@@ -139,8 +140,10 @@ func TestRouter(t *testing.T) {
 	s, err := storage.NewStorager(cfg)
 	require.NoError(t, err)
 
+	a := authenticator.New(cfg)
+
 	h := handlers.NewHandler(s, cfg)
-	m := middlewares.NewMiddlewares(cfg)
+	m := middlewares.NewMiddlewares(cfg, a)
 	r := NewRouter(h, m)
 
 	ts := httptest.NewServer(r)

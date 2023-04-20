@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/routers"
@@ -45,7 +46,9 @@ func main() {
 
 	h := handlers.NewHandler(s, cfg)
 
-	m := middlewares.NewMiddlewares(cfg)
+	a := authenticator.New(cfg)
+
+	m := middlewares.NewMiddlewares(cfg, a)
 
 	r := routers.NewRouter(h, m)
 
