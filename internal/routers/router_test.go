@@ -122,7 +122,7 @@ func genTestLink() (link TestLink, err error) {
 		Delete: del.Int64() != 0,
 	}
 
-	return
+	return link, err
 }
 
 // TestRouter - тесты для роутера NewRouter.
@@ -286,7 +286,8 @@ func TestRouter(t *testing.T) {
 			URLs:  10,
 			Users: 1,
 		}
-		expected, err := json.Marshal(stats)
+		var expected []byte
+		expected, err = json.Marshal(stats)
 		require.NoError(t, err)
 
 		statusCode, body, _ := testRequest(

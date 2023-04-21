@@ -27,10 +27,14 @@ func NewHandler(s storage.Storager, cfg configs.Config) *Handler {
 	return h
 }
 
-func (h *Handler) httpJSONError(w http.ResponseWriter, error string, code int) {
-	jsonError, _ := json.Marshal(struct {
-		Error string `json:"error"`
-	}{error})
+func (h *Handler) httpJSONError(w http.ResponseWriter, msg string, code int) {
+	jsonError, _ := json.Marshal(
+		struct {
+			Error string `json:"error"`
+		}{
+			Error: msg,
+		},
+	)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)

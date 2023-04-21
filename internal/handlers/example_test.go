@@ -76,7 +76,7 @@ func ExampleHandler_PingDB() {
 }
 
 func ExampleHandler_ShortenURL() {
-	url := "https://google.com"
+	url := "https://yandex.ru"
 	link := "http://localhost:8080/api/shorten"
 
 	request := struct {

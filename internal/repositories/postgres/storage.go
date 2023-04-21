@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // postgres init for golang-migrate
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // file init for golang-migrate
 	"github.com/jackc/pgerrcode"
 	"github.com/lib/pq"
 

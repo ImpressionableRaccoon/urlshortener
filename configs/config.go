@@ -22,6 +22,7 @@ type Config struct {
 	HTTPSDomain        string     // Домен при использовании HTTPS.
 	ConfigFile         string     // JSON-файл, в котором хранится конфигурация.
 	TrustedSubnet      *net.IPNet // Доверенная сеть, из которой можно получать статистику сервиса.
+	GRPCAdress         string     // Адрес сервера grpc.
 }
 
 // NewConfig - конструктор для Config, сам получит и запишет значения.
@@ -36,6 +37,7 @@ func NewConfig() Config {
 		ServerAddress: ":8080",
 		ServerBaseURL: "http://localhost:8080",
 		CookieKey:     []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
+		GRPCAdress:    ":3200",
 	}
 
 	cfg.loadEnv()
@@ -149,12 +151,11 @@ func (cfg *Config) loadJSON() {
 	}
 }
 
-func (cfg *Config) parseAndSaveSubnet(s string) (ok bool) {
+func (cfg *Config) parseAndSaveSubnet(s string) {
 	_, n, err := net.ParseCIDR(s)
 	if err != nil {
-		return false
+		return
 	}
 
 	cfg.TrustedSubnet = n
-	return true
 }

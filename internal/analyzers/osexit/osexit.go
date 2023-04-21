@@ -9,6 +9,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+const mainPackageName = "main"
+
 // Analyzer - анализатор, который проверяет наличие os.Exit() в функции main пакета main
 var Analyzer = &analysis.Analyzer{
 	Name: "osexit",
@@ -23,14 +25,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			continue
 		}
 
-		if file.Name.Name != "main" {
+		if file.Name.Name != mainPackageName {
 			continue
 		}
 
 		ast.Inspect(file, func(node ast.Node) bool {
 			switch x := node.(type) {
 			case *ast.FuncDecl:
-				if x.Name.Name != "main" {
+				if x.Name.Name != mainPackageName {
 					return false
 				}
 			case *ast.DeferStmt:

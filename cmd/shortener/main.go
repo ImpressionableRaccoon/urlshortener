@@ -6,10 +6,10 @@ import (
 	"log"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
@@ -59,16 +59,27 @@ func main() {
 			return
 		}
 
-		err := http.ListenAndServe(cfg.PprofServerAddress, nil)
+		srv := http.Server{
+			ReadHeaderTimeout: time.Second,
+		}
+
+		var ln net.Listener
+		ln, err = net.Listen("tcp", cfg.PprofServerAddress)
+		if err != nil {
+			log.Printf("pprof listen failed: %v\n", err)
+			return
+		}
+
+		err = srv.Serve(ln)
 		if err != nil {
 			log.Printf("pprof server error: %s\n", err)
 		}
 	}()
 
 	go func() {
-		listen, err := net.Listen("tcp", ":3200")
-		if err != nil {
-			log.Printf("listen grpc port error: %s\n", err)
+		ln, grpcErr := net.Listen("tcp", cfg.GRPCAdress)
+		if grpcErr != nil {
+			log.Printf("listen grpc port error: %s\n", grpcErr)
 			return
 		}
 
@@ -76,14 +87,15 @@ func main() {
 		g := grpc.NewServer(grpc.UnaryInterceptor(i.AuthUnaryInterceptor))
 		pb.RegisterShortenerServer(g, shortener.NewGRPCServer(cfg, s))
 
-		if err := g.Serve(listen); err != nil {
-			log.Printf("gRPC server error: %s\n", err)
+		if grpcErr = g.Serve(ln); grpcErr != nil {
+			log.Printf("gRPC server error: %s\n", grpcErr)
 			return
 		}
 	}()
 
 	srv := http.Server{
-		Handler: r,
+		Handler:           r,
+		ReadHeaderTimeout: time.Second,
 	}
 
 	var ln net.Listener
@@ -102,13 +114,11 @@ func main() {
 	go func() {
 		<-sigint
 
-		err := srv.Shutdown(context.Background())
-		if err != nil {
+		if shutdownErr := srv.Shutdown(context.Background()); shutdownErr != nil {
 			log.Printf("error shutdown server: %v", err)
 		}
 
-		err = s.Close(context.Background())
-		if err != nil {
+		if closeErr := s.Close(context.Background()); closeErr != nil {
 			log.Printf("error close storage: %v", err)
 		}
 
@@ -116,7 +126,7 @@ func main() {
 	}()
 
 	err = srv.Serve(ln)
-	if err != http.ErrServerClosed {
+	if !errors.Is(err, http.ErrServerClosed) {
 		panic(err)
 	}
 

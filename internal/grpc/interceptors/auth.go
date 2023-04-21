@@ -17,7 +17,8 @@ import (
 
 // AuthUnaryInterceptor отвечает за аутентификацию grpc-клиентов.
 func (i interceptors) AuthUnaryInterceptor(ctx context.Context,
-	req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+) (resp interface{}, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
