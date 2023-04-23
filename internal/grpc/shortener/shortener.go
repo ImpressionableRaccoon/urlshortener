@@ -19,6 +19,8 @@ import (
 	pb "github.com/ImpressionableRaccoon/urlshortener/proto"
 )
 
+var errWrongURL = errors.New("wrong url")
+
 type server struct {
 	pb.UnimplementedShortenerServer
 
@@ -46,17 +48,32 @@ func (s server) Ping(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, err
 }
 
 // Short - обработчик для создания короткой ссылки.
-func (s server) Short(ctx context.Context, l *pb.Link) (*pb.Link, error) {
+func (s server) Short(ctx context.Context, req *pb.ShortRequest) (*pb.ShortResponse, error) {
 	user, err := authenticator.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get user: %v", err)
 	}
 
-	return s.short(ctx, l, user)
+	id, url, err := s.short(ctx, user, req.Url)
+	if errors.Is(err, repositories.ErrURLAlreadyExists) {
+		return nil, status.Errorf(codes.AlreadyExists, "short error: %v", err)
+	}
+	if errors.Is(err, errWrongURL) {
+		return nil, status.Errorf(codes.InvalidArgument, "short error: %v", err)
+	}
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.ShortResponse{
+		Id:       id,
+		Url:      req.Url,
+		ShortUrl: url,
+	}, nil
 }
 
 // Get - обработчик, который получает полную ссылку из id короткой.
-func (s server) Get(ctx context.Context, l *pb.Link) (*pb.Link, error) {
+func (s server) Get(ctx context.Context, l *pb.GetRequest) (*pb.GetResponse, error) {
 	if len(l.Id) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id length should be greater than 0")
 	}
@@ -72,7 +89,7 @@ func (s server) Get(ctx context.Context, l *pb.Link) (*pb.Link, error) {
 		return nil, status.Error(codes.Unavailable, "link is deleted")
 	}
 
-	return &pb.Link{
+	return &pb.GetResponse{
 		Id:       l.Id,
 		Url:      url,
 		ShortUrl: s.genShortLink(l.Id),
@@ -80,7 +97,7 @@ func (s server) Get(ctx context.Context, l *pb.Link) (*pb.Link, error) {
 }
 
 // GetLinks - обработчик возвращающий все ссылки принадлежащие текущему пользователю.
-func (s server) GetLinks(ctx context.Context, _ *emptypb.Empty) (*pb.Batch, error) {
+func (s server) GetLinks(ctx context.Context, _ *emptypb.Empty) (*pb.GetLinksResponse, error) {
 	user, err := authenticator.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get user: %v", err)
@@ -91,9 +108,9 @@ func (s server) GetLinks(ctx context.Context, _ *emptypb.Empty) (*pb.Batch, erro
 		return nil, status.Errorf(codes.Internal, "server error: %v", err)
 	}
 
-	b := &pb.Batch{}
+	b := &pb.GetLinksResponse{}
 	for _, link := range links {
-		b.Data = append(b.Data, &pb.Link{
+		b.Links = append(b.Links, &pb.GetLinksResponse_Link{
 			Id:       link.ID,
 			Url:      link.URL,
 			ShortUrl: s.genShortLink(link.ID),
@@ -104,38 +121,43 @@ func (s server) GetLinks(ctx context.Context, _ *emptypb.Empty) (*pb.Batch, erro
 }
 
 // BatchShort - обработчик для создания пачки коротких ссылок.
-func (s server) BatchShort(ctx context.Context, in *pb.Batch) (*pb.Batch, error) {
+func (s server) BatchShort(ctx context.Context, in *pb.BatchShortRequest) (*pb.BatchShortResponse, error) {
 	user, err := authenticator.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get user: %v", err)
 	}
 
-	res := &pb.Batch{}
+	res := &pb.BatchShortResponse{}
 
-	for _, link := range in.Data {
-		l, err := s.short(ctx, link, user)
+	for _, link := range in.Links {
+		id, shortURL, err := s.short(ctx, user, link.Url)
 		if err != nil {
 			continue
 		}
-		res.Data = append(res.Data, l)
+		res.Links = append(res.Links, &pb.BatchShortResponse_Link{
+			Id:            id,
+			Url:           link.Url,
+			ShortUrl:      shortURL,
+			CorrelationId: link.CorrelationId,
+		})
 	}
 
 	return res, nil
 }
 
 // Delete - обработчик для удаления ссылок пользователя.
-func (s server) Delete(ctx context.Context, b *pb.Batch) (*emptypb.Empty, error) {
+func (s server) Delete(ctx context.Context, b *pb.DeleteRequest) (*emptypb.Empty, error) {
 	user, err := authenticator.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get user: %v", err)
 	}
 
 	ids := make([]repositories.ID, 0)
-	for _, link := range b.Data {
-		if len(link.Id) == 0 {
+	for _, link := range b.Ids {
+		if len(link) == 0 {
 			continue
 		}
-		ids = append(ids, link.Id)
+		ids = append(ids, link)
 	}
 
 	go func() {
@@ -151,36 +173,34 @@ func (s server) Delete(ctx context.Context, b *pb.Batch) (*emptypb.Empty, error)
 }
 
 // GetStats - обработчик, который возвращает статистику сервера.
-func (s server) GetStats(ctx context.Context, _ *emptypb.Empty) (*pb.Statistic, error) {
+func (s server) GetStats(ctx context.Context, _ *emptypb.Empty) (*pb.GetStatsResponse, error) {
 	stats, err := s.s.GetStats(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "server error: %v", err)
 	}
 
-	return &pb.Statistic{
+	return &pb.GetStatsResponse{
 		Links: stats.URLs,
 		Users: stats.Users,
 	}, nil
 }
 
-func (s server) short(ctx context.Context, l *pb.Link, user uuid.UUID) (*pb.Link, error) {
-	if len(l.Url) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "link length should be greater than 0")
-	}
-	id, err := s.s.Add(ctx, l.Url, user)
-	if errors.Is(err, repositories.ErrURLAlreadyExists) {
-		return nil, status.Error(codes.AlreadyExists, "link already exists")
-	}
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "server error: %v", err)
+func (s server) short(ctx context.Context, user uuid.UUID, url string) (id string, shortURL string, err error) {
+	if len(url) == 0 {
+		return "", "", errWrongURL
 	}
 
-	return &pb.Link{
-		Id:            id,
-		Url:           l.Url,
-		ShortUrl:      s.genShortLink(id),
-		CorrelationId: l.CorrelationId,
-	}, nil
+	id, err = s.s.Add(ctx, url, user)
+	if errors.Is(err, repositories.ErrURLAlreadyExists) {
+		return "", "", err
+	}
+	if err != nil {
+		return "", "", err
+	}
+
+	shortURL = s.genShortLink(id)
+
+	return id, shortURL, nil
 }
 
 func (s server) genShortLink(id string) string {

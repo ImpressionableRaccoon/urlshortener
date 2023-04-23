@@ -35,12 +35,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShortenerClient interface {
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Short(ctx context.Context, in *Link, opts ...grpc.CallOption) (*Link, error)
-	Get(ctx context.Context, in *Link, opts ...grpc.CallOption) (*Link, error)
-	GetLinks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Batch, error)
-	BatchShort(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*Batch, error)
-	Delete(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Statistic, error)
+	Short(ctx context.Context, in *ShortRequest, opts ...grpc.CallOption) (*ShortResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetLinks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetLinksResponse, error)
+	BatchShort(ctx context.Context, in *BatchShortRequest, opts ...grpc.CallOption) (*BatchShortResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetStatsResponse, error)
 }
 
 type shortenerClient struct {
@@ -60,8 +60,8 @@ func (c *shortenerClient) Ping(ctx context.Context, in *emptypb.Empty, opts ...g
 	return out, nil
 }
 
-func (c *shortenerClient) Short(ctx context.Context, in *Link, opts ...grpc.CallOption) (*Link, error) {
-	out := new(Link)
+func (c *shortenerClient) Short(ctx context.Context, in *ShortRequest, opts ...grpc.CallOption) (*ShortResponse, error) {
+	out := new(ShortResponse)
 	err := c.cc.Invoke(ctx, Shortener_Short_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -69,8 +69,8 @@ func (c *shortenerClient) Short(ctx context.Context, in *Link, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *shortenerClient) Get(ctx context.Context, in *Link, opts ...grpc.CallOption) (*Link, error) {
-	out := new(Link)
+func (c *shortenerClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, Shortener_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,8 +78,8 @@ func (c *shortenerClient) Get(ctx context.Context, in *Link, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *shortenerClient) GetLinks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Batch, error) {
-	out := new(Batch)
+func (c *shortenerClient) GetLinks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetLinksResponse, error) {
+	out := new(GetLinksResponse)
 	err := c.cc.Invoke(ctx, Shortener_GetLinks_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -87,8 +87,8 @@ func (c *shortenerClient) GetLinks(ctx context.Context, in *emptypb.Empty, opts 
 	return out, nil
 }
 
-func (c *shortenerClient) BatchShort(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*Batch, error) {
-	out := new(Batch)
+func (c *shortenerClient) BatchShort(ctx context.Context, in *BatchShortRequest, opts ...grpc.CallOption) (*BatchShortResponse, error) {
+	out := new(BatchShortResponse)
 	err := c.cc.Invoke(ctx, Shortener_BatchShort_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (c *shortenerClient) BatchShort(ctx context.Context, in *Batch, opts ...grp
 	return out, nil
 }
 
-func (c *shortenerClient) Delete(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *shortenerClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Shortener_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -105,8 +105,8 @@ func (c *shortenerClient) Delete(ctx context.Context, in *Batch, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *shortenerClient) GetStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Statistic, error) {
-	out := new(Statistic)
+func (c *shortenerClient) GetStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetStatsResponse, error) {
+	out := new(GetStatsResponse)
 	err := c.cc.Invoke(ctx, Shortener_GetStats_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -119,12 +119,12 @@ func (c *shortenerClient) GetStats(ctx context.Context, in *emptypb.Empty, opts 
 // for forward compatibility
 type ShortenerServer interface {
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
-	Short(context.Context, *Link) (*Link, error)
-	Get(context.Context, *Link) (*Link, error)
-	GetLinks(context.Context, *emptypb.Empty) (*Batch, error)
-	BatchShort(context.Context, *Batch) (*Batch, error)
-	Delete(context.Context, *Batch) (*emptypb.Empty, error)
-	GetStats(context.Context, *emptypb.Empty) (*Statistic, error)
+	Short(context.Context, *ShortRequest) (*ShortResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetLinks(context.Context, *emptypb.Empty) (*GetLinksResponse, error)
+	BatchShort(context.Context, *BatchShortRequest) (*BatchShortResponse, error)
+	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
+	GetStats(context.Context, *emptypb.Empty) (*GetStatsResponse, error)
 	mustEmbedUnimplementedShortenerServer()
 }
 
@@ -135,22 +135,22 @@ type UnimplementedShortenerServer struct {
 func (UnimplementedShortenerServer) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedShortenerServer) Short(context.Context, *Link) (*Link, error) {
+func (UnimplementedShortenerServer) Short(context.Context, *ShortRequest) (*ShortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Short not implemented")
 }
-func (UnimplementedShortenerServer) Get(context.Context, *Link) (*Link, error) {
+func (UnimplementedShortenerServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedShortenerServer) GetLinks(context.Context, *emptypb.Empty) (*Batch, error) {
+func (UnimplementedShortenerServer) GetLinks(context.Context, *emptypb.Empty) (*GetLinksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLinks not implemented")
 }
-func (UnimplementedShortenerServer) BatchShort(context.Context, *Batch) (*Batch, error) {
+func (UnimplementedShortenerServer) BatchShort(context.Context, *BatchShortRequest) (*BatchShortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchShort not implemented")
 }
-func (UnimplementedShortenerServer) Delete(context.Context, *Batch) (*emptypb.Empty, error) {
+func (UnimplementedShortenerServer) Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedShortenerServer) GetStats(context.Context, *emptypb.Empty) (*Statistic, error) {
+func (UnimplementedShortenerServer) GetStats(context.Context, *emptypb.Empty) (*GetStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 func (UnimplementedShortenerServer) mustEmbedUnimplementedShortenerServer() {}
@@ -185,7 +185,7 @@ func _Shortener_Ping_Handler(srv interface{}, ctx context.Context, dec func(inte
 }
 
 func _Shortener_Short_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Link)
+	in := new(ShortRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -197,13 +197,13 @@ func _Shortener_Short_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: Shortener_Short_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).Short(ctx, req.(*Link))
+		return srv.(ShortenerServer).Short(ctx, req.(*ShortRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Shortener_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Link)
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -215,7 +215,7 @@ func _Shortener_Get_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: Shortener_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).Get(ctx, req.(*Link))
+		return srv.(ShortenerServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -239,7 +239,7 @@ func _Shortener_GetLinks_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _Shortener_BatchShort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Batch)
+	in := new(BatchShortRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -251,13 +251,13 @@ func _Shortener_BatchShort_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: Shortener_BatchShort_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).BatchShort(ctx, req.(*Batch))
+		return srv.(ShortenerServer).BatchShort(ctx, req.(*BatchShortRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Shortener_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Batch)
+	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func _Shortener_Delete_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: Shortener_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServer).Delete(ctx, req.(*Batch))
+		return srv.(ShortenerServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
