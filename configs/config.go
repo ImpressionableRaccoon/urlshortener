@@ -6,23 +6,21 @@ import (
 	"flag"
 	"io"
 	"log"
-	"net"
 	"os"
 )
 
 // Config - структура для хранения конфигурации сервера.
 type Config struct {
-	ServerAddress      string     // Адрес сервера, по умолчанию ":8080".
-	PprofServerAddress string     // Адрес сервера профилирования.
-	ServerBaseURL      string     // URL сервера, по умолчанию "http://localhost:8080".
-	FileStoragePath    string     // Путь для файлового хранилища.
-	DatabaseDSN        string     // Адрес базы данных.
-	CookieKey          []byte     // Ключ для подписи cookie.
-	EnableHTTPS        bool       // Используем ли HTTPS (на 443 порту).
-	HTTPSDomain        string     // Домен при использовании HTTPS.
-	ConfigFile         string     // JSON-файл, в котором хранится конфигурация.
-	TrustedSubnet      *net.IPNet // Доверенная сеть, из которой можно получать статистику сервиса.
-	GRPCAdress         string     // Адрес сервера grpc.
+	ServerAddress      string // Адрес сервера, по умолчанию ":8080".
+	PprofServerAddress string // Адрес сервера профилирования.
+	ServerBaseURL      string // URL сервера, по умолчанию "http://localhost:8080".
+	FileStoragePath    string // Путь для файлового хранилища.
+	DatabaseDSN        string // Адрес базы данных.
+	CookieKey          []byte // Ключ для подписи cookie.
+	EnableHTTPS        bool   // Используем ли HTTPS (на 443 порту).
+	ConfigFile         string // JSON-файл, в котором хранится конфигурация.
+	TrustedSubnet      string // Доверенная сеть, из которой можно получать статистику сервиса.
+	GRPCAdress         string // Адрес сервера grpc.
 }
 
 // NewConfig - конструктор для Config, сам получит и запишет значения.
@@ -68,16 +66,12 @@ func (cfg *Config) loadEnv() {
 		cfg.EnableHTTPS = true
 	}
 
-	if s, ok := os.LookupEnv("HTTPS_DOMAIN"); ok {
-		cfg.HTTPSDomain = s
-	}
-
 	if s, ok := os.LookupEnv("CONFIG"); ok {
 		cfg.ConfigFile = s
 	}
 
 	if s, ok := os.LookupEnv("TRUSTED_SUBNET"); ok {
-		cfg.parseAndSaveSubnet(s)
+		cfg.TrustedSubnet = s
 	}
 }
 
@@ -87,16 +81,11 @@ func (cfg *Config) loadArgs() {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "enable https support")
-	flag.StringVar(&cfg.HTTPSDomain, "https-domain", cfg.HTTPSDomain, "HTTPS domain name")
 	flag.StringVar(&cfg.ConfigFile, "c", cfg.ConfigFile, "JSON config file")
 	flag.StringVar(&cfg.ConfigFile, "config", cfg.ConfigFile, "JSON config file")
-	n := flag.String("t", cfg.TrustedSubnet.String(), "trusted subnet")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "trusted subnet")
 
 	flag.Parse()
-
-	if n != nil {
-		cfg.parseAndSaveSubnet(*n)
-	}
 }
 
 func (cfg *Config) loadJSON() {
@@ -146,16 +135,7 @@ func (cfg *Config) loadJSON() {
 	if !cfg.EnableHTTPS {
 		cfg.EnableHTTPS = c.EnableHTTPS
 	}
-	if cfg.TrustedSubnet == nil {
-		cfg.parseAndSaveSubnet(c.TrustedSubnet)
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = c.TrustedSubnet
 	}
-}
-
-func (cfg *Config) parseAndSaveSubnet(s string) {
-	_, n, err := net.ParseCIDR(s)
-	if err != nil {
-		return
-	}
-
-	cfg.TrustedSubnet = n
 }

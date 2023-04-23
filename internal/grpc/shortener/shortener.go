@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
@@ -23,15 +22,17 @@ import (
 type server struct {
 	pb.UnimplementedShortenerServer
 
-	cfg configs.Config
-	s   storage.Storager
+	s      storage.Storager
+	https  bool
+	domain string
 }
 
 // NewGRPCServer - конструктор сервера шортенера.
-func NewGRPCServer(cfg configs.Config, s storage.Storager) *server {
+func NewGRPCServer(s storage.Storager, https bool, domain string) *server {
 	return &server{
-		cfg: cfg,
-		s:   s,
+		s:      s,
+		https:  https,
+		domain: domain,
 	}
 }
 
@@ -183,8 +184,8 @@ func (s server) short(ctx context.Context, l *pb.Link, user uuid.UUID) (*pb.Link
 }
 
 func (s server) genShortLink(id string) string {
-	if s.cfg.EnableHTTPS {
-		return fmt.Sprintf("https://%s/%s", s.cfg.HTTPSDomain, id)
+	if s.https {
+		return fmt.Sprintf("https://%s/%s", s.domain, id)
 	}
-	return fmt.Sprintf("%s/%s", s.cfg.ServerBaseURL, id)
+	return fmt.Sprintf("%s/%s", s.domain, id)
 }

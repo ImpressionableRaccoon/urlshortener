@@ -15,7 +15,7 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ip := net.ParseIP(addr)
-	if h.cfg.TrustedSubnet == nil || !h.cfg.TrustedSubnet.Contains(ip) {
+	if !h.trusted.Contains(ip) {
 		h.httpJSONError(w, "Forbidden", http.StatusForbidden)
 		return
 	}

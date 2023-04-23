@@ -48,7 +48,15 @@ func main() {
 		panic(err)
 	}
 
-	h := handlers.NewHandler(s, cfg)
+	_, n, _ := net.ParseCIDR(cfg.TrustedSubnet)
+	if n == nil {
+		_, n, err = net.ParseCIDR("127.0.0.1/32")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	h := handlers.NewHandler(s, cfg.EnableHTTPS, cfg.ServerBaseURL, n)
 	a := authenticator.New(cfg)
 	m := middlewares.NewMiddlewares(cfg, a)
 	r := routers.NewRouter(h, m)
@@ -85,7 +93,7 @@ func main() {
 
 		i := interceptors.New(a)
 		g := grpc.NewServer(grpc.UnaryInterceptor(i.AuthUnaryInterceptor))
-		pb.RegisterShortenerServer(g, shortener.NewGRPCServer(cfg, s))
+		pb.RegisterShortenerServer(g, shortener.NewGRPCServer(s, cfg.EnableHTTPS, cfg.ServerBaseURL))
 
 		if grpcErr = g.Serve(ln); grpcErr != nil {
 			log.Printf("gRPC server error: %s\n", grpcErr)
@@ -100,10 +108,10 @@ func main() {
 
 	var ln net.Listener
 	if cfg.EnableHTTPS {
-		if cfg.HTTPSDomain == "" {
+		if cfg.ServerBaseURL == "" {
 			panic(errors.New("empty HTTPS domain name"))
 		}
-		ln = autocert.NewListener(cfg.HTTPSDomain)
+		ln = autocert.NewListener(cfg.ServerBaseURL)
 	} else {
 		ln, err = net.Listen("tcp", cfg.ServerAddress)
 		if err != nil {

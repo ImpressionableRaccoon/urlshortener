@@ -131,10 +131,7 @@ func TestRouter(t *testing.T) {
 		ServerAddress: ":31222",
 		ServerBaseURL: "http://localhost:31222",
 		CookieKey:     []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-		TrustedSubnet: &net.IPNet{
-			IP:   net.IP{127, 0, 0, 1},
-			Mask: net.IPMask{255, 255, 255, 255},
-		},
+		TrustedSubnet: "127.0.0.1/32",
 	}
 
 	s, err := storage.NewStorager(cfg)
@@ -142,7 +139,9 @@ func TestRouter(t *testing.T) {
 
 	a := authenticator.New(cfg)
 
-	h := handlers.NewHandler(s, cfg)
+	_, n, _ := net.ParseCIDR(cfg.TrustedSubnet)
+
+	h := handlers.NewHandler(s, cfg.EnableHTTPS, cfg.ServerBaseURL, n)
 	m := middlewares.NewMiddlewares(cfg, a)
 	r := NewRouter(h, m)
 
