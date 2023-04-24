@@ -137,11 +137,16 @@ func (st *PsqlStorage) GetUserLinks(
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
+	data = make([]repositories.LinkData, 0)
+
 	rows, err := st.db.QueryContext(
 		ctx,
 		`SELECT id, url FROM links WHERE user_id = $1 AND deleted = FALSE`,
 		user,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return data, nil
+	}
 	if err != nil {
 		log.Printf("query failed: %v", err)
 		return nil, err
@@ -150,8 +155,6 @@ func (st *PsqlStorage) GetUserLinks(
 		log.Printf("rows failed: %v", err)
 		return nil, err
 	}
-
-	data = make([]repositories.LinkData, 0)
 
 	for rows.Next() {
 		link := repositories.LinkData{
@@ -246,6 +249,8 @@ worker:
 	for {
 		select {
 		case <-st.deleteShutdown:
+			break worker
+		case <-ctx.Done():
 			break worker
 		default:
 		}

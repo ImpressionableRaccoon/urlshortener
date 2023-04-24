@@ -3,6 +3,7 @@ module github.com/ImpressionableRaccoon/urlshortener
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-critic/go-critic v0.7.0
 	github.com/go-resty/resty/v2 v2.7.0
