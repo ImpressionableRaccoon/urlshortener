@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
 )
 
@@ -16,7 +17,7 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
-	user, err := getUser(r)
+	user, err := authenticator.GetUser(r.Context())
 	if err != nil {
 		log.Printf("unable to parse user uuid: %v", err)
 		h.httpJSONError(w, "Server error", http.StatusInternalServerError)

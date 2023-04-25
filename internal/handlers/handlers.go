@@ -5,32 +5,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
-	"github.com/ImpressionableRaccoon/urlshortener/configs"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/storage"
 )
 
 // Handler хранит обработчики для http-запросов пользователя.
 type Handler struct {
-	st  storage.Storager
-	cfg configs.Config
+	st      storage.Storager
+	https   bool
+	domain  string
+	trusted *net.IPNet
 }
 
 // NewHandler - конструктор для Handler.
-func NewHandler(s storage.Storager, cfg configs.Config) *Handler {
+func NewHandler(s storage.Storager, https bool, domain string, trusted *net.IPNet) *Handler {
 	h := &Handler{
-		st:  s,
-		cfg: cfg,
+		st:      s,
+		https:   https,
+		domain:  domain,
+		trusted: trusted,
 	}
 
 	return h
 }
 
-func (h *Handler) httpJSONError(w http.ResponseWriter, error string, code int) {
-	jsonError, _ := json.Marshal(struct {
-		Error string `json:"error"`
-	}{error})
+func (h *Handler) httpJSONError(w http.ResponseWriter, msg string, code int) {
+	jsonError, _ := json.Marshal(
+		struct {
+			Error string `json:"error"`
+		}{
+			Error: msg,
+		},
+	)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
@@ -41,8 +49,8 @@ func (h *Handler) httpJSONError(w http.ResponseWriter, error string, code int) {
 }
 
 func (h *Handler) genShortLink(id string) string {
-	if h.cfg.EnableHTTPS {
-		return fmt.Sprintf("https://%s/%s", h.cfg.HTTPSDomain, id)
+	if h.https {
+		return fmt.Sprintf("https://%s/%s", h.domain, id)
 	}
-	return fmt.Sprintf("%s/%s", h.cfg.ServerBaseURL, id)
+	return fmt.Sprintf("%s/%s", h.domain, id)
 }

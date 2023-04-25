@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -32,7 +33,7 @@ func TestNewStorager(t *testing.T) {
 	})
 
 	t.Run("file storage", func(t *testing.T) {
-		fileName := "testStorage"
+		fileName := "testStorage123"
 
 		got, err := NewStorager(configs.Config{
 			FileStoragePath: fileName,
@@ -43,6 +44,9 @@ func TestNewStorager(t *testing.T) {
 		default:
 			assert.Error(t, errors.New("wrong storager type"))
 		}
+
+		err = got.Close(context.Background())
+		require.NoError(t, err)
 
 		err = os.Remove(fileName)
 		require.NoError(t, err)

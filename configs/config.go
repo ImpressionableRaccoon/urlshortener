@@ -17,9 +17,10 @@ type Config struct {
 	FileStoragePath    string // Путь для файлового хранилища.
 	DatabaseDSN        string // Адрес базы данных.
 	CookieKey          []byte // Ключ для подписи cookie.
-	EnableHTTPS        bool   // Используем ли HTTPS (на 443 порту)
-	HTTPSDomain        string // Домен при использовании HTTPS
-	ConfigFile         string // JSON-файл, в котором хранится конфигурация
+	EnableHTTPS        bool   // Используем ли HTTPS (на 443 порту).
+	ConfigFile         string // JSON-файл, в котором хранится конфигурация.
+	TrustedSubnet      string // Доверенная сеть, из которой можно получать статистику сервиса.
+	GRPCAdress         string // Адрес сервера grpc.
 }
 
 // NewConfig - конструктор для Config, сам получит и запишет значения.
@@ -34,6 +35,7 @@ func NewConfig() Config {
 		ServerAddress: ":8080",
 		ServerBaseURL: "http://localhost:8080",
 		CookieKey:     []byte{14, 180, 4, 236, 208, 28, 133, 5, 116, 159, 137, 123, 80, 176, 209, 179},
+		GRPCAdress:    ":3200",
 	}
 
 	cfg.loadEnv()
@@ -64,12 +66,12 @@ func (cfg *Config) loadEnv() {
 		cfg.EnableHTTPS = true
 	}
 
-	if s, ok := os.LookupEnv("HTTPS_DOMAIN"); ok {
-		cfg.HTTPSDomain = s
-	}
-
 	if s, ok := os.LookupEnv("CONFIG"); ok {
 		cfg.ConfigFile = s
+	}
+
+	if s, ok := os.LookupEnv("TRUSTED_SUBNET"); ok {
+		cfg.TrustedSubnet = s
 	}
 }
 
@@ -79,9 +81,9 @@ func (cfg *Config) loadArgs() {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "enable https support")
-	flag.StringVar(&cfg.HTTPSDomain, "https-domain", cfg.HTTPSDomain, "HTTPS domain name")
 	flag.StringVar(&cfg.ConfigFile, "c", cfg.ConfigFile, "JSON config file")
 	flag.StringVar(&cfg.ConfigFile, "config", cfg.ConfigFile, "JSON config file")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "trusted subnet")
 
 	flag.Parse()
 }
@@ -97,6 +99,7 @@ func (cfg *Config) loadJSON() {
 		FileStoragePath string `json:"file_storage_path"`
 		DatabaseDSN     string `json:"database_dsn"`
 		EnableHTTPS     bool   `json:"enable_https"`
+		TrustedSubnet   string `json:"trusted_subnet"`
 	}{}
 
 	f, err := os.Open(cfg.ConfigFile)
@@ -131,5 +134,8 @@ func (cfg *Config) loadJSON() {
 	}
 	if !cfg.EnableHTTPS {
 		cfg.EnableHTTPS = c.EnableHTTPS
+	}
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = c.TrustedSubnet
 	}
 }

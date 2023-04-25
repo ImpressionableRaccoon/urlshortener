@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ImpressionableRaccoon/urlshortener/configs"
+	"github.com/ImpressionableRaccoon/urlshortener/internal/authenticator"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/handlers"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/middlewares"
 	"github.com/ImpressionableRaccoon/urlshortener/internal/repositories"
@@ -120,7 +122,7 @@ func genTestLink() (link TestLink, err error) {
 		Delete: del.Int64() != 0,
 	}
 
-	return
+	return link, err
 }
 
 // TestRouter - тесты для роутера NewRouter.
@@ -129,13 +131,18 @@ func TestRouter(t *testing.T) {
 		ServerAddress: ":31222",
 		ServerBaseURL: "http://localhost:31222",
 		CookieKey:     []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+		TrustedSubnet: "127.0.0.1/32",
 	}
 
 	s, err := storage.NewStorager(cfg)
 	require.NoError(t, err)
 
-	h := handlers.NewHandler(s, cfg)
-	m := middlewares.NewMiddlewares(cfg)
+	a := authenticator.New(cfg)
+
+	_, n, _ := net.ParseCIDR(cfg.TrustedSubnet)
+
+	h := handlers.NewHandler(s, cfg.EnableHTTPS, cfg.ServerBaseURL, n)
+	m := middlewares.NewMiddlewares(cfg, a)
 	r := NewRouter(h, m)
 
 	ts := httptest.NewServer(r)
@@ -271,6 +278,24 @@ func TestRouter(t *testing.T) {
 			assert.Equal(t, http.StatusTemporaryRedirect, statusCode)
 			assert.Equal(t, link.URL, header.Get("Location"))
 		}
+	})
+
+	t.Run("GET /api/internal/stats: get stats", func(t *testing.T) {
+		stats := repositories.ServiceStats{
+			URLs:  10,
+			Users: 1,
+		}
+		var expected []byte
+		expected, err = json.Marshal(stats)
+		require.NoError(t, err)
+
+		statusCode, body, _ := testRequest(
+			t, ts, jar, http.MethodGet, "/api/internal/stats",
+			nil, nil,
+		)
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.JSONEq(t, string(expected), string(body))
 	})
 
 	shortenLinks, err := genTestLinks(10)

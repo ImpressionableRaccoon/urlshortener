@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" // Символы, которые могут быть в ID.
+	allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" // Символы для ID.
 	idLength          = 5                                                                // Длина генерируемого ID.
 )
 
